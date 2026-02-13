@@ -5,23 +5,25 @@ import Footer from './components/Footer';
 // Importando as páginas
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
-import Product from './pages/Product';
+import Product from './pages/Product'; // <--- Verifique se esse import existe!
 import Cart from './pages/Cart';
 
 function App() {
   return (
     <BrowserRouter>
-      {/* O div abaixo força o footer a ficar no final (flex-col e min-h-screen) */}
       <div className="flex flex-col min-h-screen bg-brand-dark">
         <Header />
         
-        {/* Main com padding para o conteúdo não colar na borda */}
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/catalogo" element={<Catalog />} />
-            <Route path="/produto" element={<Product />} />
-            <Route path="/carrinho" element={<Cart />} />
+            <Route path="/catalog" element={<Catalog />} />
+            
+            {/* --- ESTA É A LINHA CRUCIAL --- */}
+            {/* O ":id" significa que ele aceita /product/1, /product/2, etc */}
+            <Route path="/product/:id" element={<Product />} />
+            
+            <Route path="/cart" element={<Cart />} />
           </Routes>
         </main>
 
