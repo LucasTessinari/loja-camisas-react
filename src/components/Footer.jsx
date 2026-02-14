@@ -23,16 +23,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Coluna 3: Suporte */}
-          <div>
-            <h4 className="text-brand-white font-bold mb-4">Suporte</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-brand-primary">Rastrear Pedido</a></li>
-              <li><a href="#" className="hover:text-brand-primary">Trocas e Devoluções</a></li>
-              <li><a href="#" className="hover:text-brand-primary">Fale Conosco</a></li>
-            </ul>
-          </div>
-
           {/* Coluna 4: Pagamento */}
           <div>
             <h4 className="text-brand-white font-bold mb-4">Pagamento Seguro</h4>
