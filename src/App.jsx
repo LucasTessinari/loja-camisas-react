@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import Product from './pages/Product'; // <--- Verifique se esse import existe!
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
 
 function App() {
   return (
@@ -18,12 +19,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/catalog" element={<Catalog />} />
-            
-            {/* --- ESTA É A LINHA CRUCIAL --- */}
-            {/* O ":id" significa que ele aceita /product/1, /product/2, etc */}
             <Route path="/product/:id" element={<Product />} />
-            
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
           </Routes>
         </main>
 
