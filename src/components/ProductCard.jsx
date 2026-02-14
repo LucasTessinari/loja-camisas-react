@@ -1,13 +1,15 @@
 import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice';
 import { useState } from 'react';
-import { Link } from 'react-router-dom'; // <--- Usamos Link agora
+import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext'; // <--- Importe o hook
 
 const ProductCard = ({ product }) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const { addItem } = useCart(); // <--- Pegue a função addItem
 
-  // Navegação do carrossel (Previne abrir a página do produto)
+  // Navegação do carrossel
   const nextImage = (e) => {
     e.preventDefault(); 
     setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
@@ -18,10 +20,16 @@ const ProductCard = ({ product }) => {
     setCurrentImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
   };
 
-  // Botão de adicionar ao carrinho (Previne abrir a página do produto)
+  // Botão de adicionar ao carrinho DO CARD
   const handleAddToCart = (e) => {
-    e.preventDefault();
-    alert("Adicionado ao carrinho (Lógica virá na fase 6)");
+    e.preventDefault(); // Não abre a página do produto
+    
+    // Adiciona com tamanho padrão "G" (ou abre modal depois)
+    // Para simplificar agora, vamos adicionar como "G"
+    addItem(product, 'G', { name: '', number: '' });
+    
+    // Feedback visual simples (depois faremos Toast)
+    alert(`Camisa ${product.team} (G) adicionada!`);
   };
 
   return (
@@ -30,14 +38,12 @@ const ProductCard = ({ product }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 1. O LINK MESTRE (Cobre tudo, Z-Index 10) */}
       <Link 
         to={`/product/${product.id}`}
         className="absolute inset-0 z-10"
         aria-label={`Ver detalhes de ${product.name}`}
       />
 
-      {/* 2. Área da Imagem (Fica visualmente embaixo do Link) */}
       <div className="relative h-64 bg-gray-800 overflow-hidden">
         {product.images.map((img, index) => (
           <img 
@@ -50,7 +56,6 @@ const ProductCard = ({ product }) => {
           />
         ))}
 
-        {/* 3. Botões do Carrossel (Z-Index 20 - Ficam ACIMA do Link) */}
         {product.images.length > 1 && isHovered && (
           <>
             <button 
@@ -80,7 +85,6 @@ const ProductCard = ({ product }) => {
           </>
         )}
 
-        {/* Tag Lançamento (Visual apenas, fica embaixo do Link) */}
         {product.isNew && !isHovered && (
           <span className="absolute top-2 left-2 bg-brand-primary text-brand-dark text-xs font-bold px-2 py-1 rounded">
             LANÇAMENTO
@@ -88,7 +92,6 @@ const ProductCard = ({ product }) => {
         )}
       </div>
 
-      {/* 4. Informações (Texto embaixo do Link, Botão em cima) */}
       <div className="p-4 bg-brand-light relative">
         <p className="text-gray-400 text-xs mb-1 uppercase tracking-wider">{product.team}</p>
         <h3 className="text-brand-white font-bold text-lg mb-2 truncate">{product.name}</h3>
@@ -98,7 +101,7 @@ const ProductCard = ({ product }) => {
             {formatPrice(product.price)}
           </span>
           
-          {/* Botão Carrinho (Z-Index 20 - Fica ACIMA do Link) */}
+          {/* Botão Carrinho CONECTADO AGORA */}
           <button 
             onClick={handleAddToCart}
             className="bg-brand-primary p-2 rounded-full text-brand-dark hover:bg-white transition-colors relative z-20"

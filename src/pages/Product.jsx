@@ -4,12 +4,15 @@ import { formatPrice } from '../utils/formatPrice';
 import { ShoppingCart, ArrowLeft, Check, ShieldCheck } from 'lucide-react';
 import Button from '../components/Button';
 import { useState, useEffect } from 'react';
+import { useCart } from '../context/CartContext';
+
 
 const Product = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { addItem } = useCart(); // Adicione isso logo no início do componente
   
   // Estados do formulário
   const [selectedSize, setSelectedSize] = useState(null);
@@ -184,7 +187,10 @@ const Product = () => {
               variant="primary" 
               className="w-full flex justify-center items-center gap-2 text-lg py-4"
               disabled={!selectedSize} 
-              onClick={() => alert('Em breve adicionará ao carrinho!')}
+              onClick={() => {
+                addItem(product, selectedSize, customization);
+                alert("Produto adicionado ao carrinho!"); // Temporário, depois faremos um toast bonito
+              }}
             >
               <ShoppingCart size={24} />
               Adicionar ao Carrinho
