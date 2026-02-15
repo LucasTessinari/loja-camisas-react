@@ -12,7 +12,7 @@ import Checkout from './pages/Checkout';
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen bg-brand-dark">
+      <div className="flex flex-col min-h-screen bg-brand-light font-sans text-brand-text">
         <Header />
         
         <main className="flex-grow container mx-auto px-4 py-8">

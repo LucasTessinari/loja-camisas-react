@@ -9,16 +9,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          dark: '#0B0C10',       // Fundo principal (quase preto)
-          light: '#1F2833',      // Fundo secundário (cinza escuro azulado)
-          primary: '#66FCF1',    // Cor de destaque (Ciano neon - bom para botões)
-          secondary: '#45A29E',  // Cor de destaque secundária
-          text: '#C5C6C7',       // Texto padrão (cinza claro para ler no escuro)
-          white: '#FFFFFF'       // Texto destacado
+          dark: '#1A2533',       // Um tom bem escuro do azul principal para contrastes (Rodapé/Topo fino)
+          light: '#F5F7FA',      // Fundo do site (Branco gelo levemente azulado)
+          primary: '#395070',    // A SUA COR ESCOLHIDA (Header/Botões principais)
+          secondary: '#EAB308',  // Amarelo Dourado (Mantive para ofertas/destaques, combina bem com azul)
+          text: '#2D3748',       // Cinza escuro para textos (melhor leitura que preto puro)
+          white: '#FFFFFF'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'], // Fonte limpa e moderna
+        sans: ['Roboto', 'Inter', 'sans-serif'],
       }
     },
   },
