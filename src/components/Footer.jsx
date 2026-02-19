@@ -60,7 +60,7 @@ const Footer = () => {
                   to="/catalog"
                   className="hover:text-brand-secondary transition-colors"
                 >
-                  Lançamentos
+                  Retrô
                 </Link>
               </li>
               <li>

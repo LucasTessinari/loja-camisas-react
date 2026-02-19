@@ -9,37 +9,40 @@ const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { addItem } = useCart();
 
+  // Garante que images é sempre um array válido
+  const images = product.images && product.images.length > 0 ? product.images : ['https://via.placeholder.com/300x400?text=Sem+Imagem'];
+
   const nextImage = (e) => {
     e.preventDefault(); 
-    setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+    setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
   const prevImage = (e) => {
     e.preventDefault();
-    setCurrentImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
+    setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleAddToCart = (e) => {
     e.preventDefault(); 
+    // Como você já adiciona a camisa, mantemos o tamanho 'G' como default ou a lógica que você já tinha
     addItem(product, 'G', { name: '', number: '' });
-    // alert(`Camisa ${product.team} adicionada!`); // Opcional
   };
 
   return (
     <div 
-      className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 relative"
+      className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 relative h-full flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <Link 
-        to={`/product/${product.id}`}
+        to={`/product/${product._id}`} // ID DO MONGO
         className="absolute inset-0 z-10"
         aria-label={`Ver detalhes de ${product.name}`}
       />
 
       {/* Imagem (Mantive fundo cinza claro para destacar a camisa) */}
-      <div className="relative h-64 bg-gray-50 overflow-hidden">
-        {product.images.map((img, index) => (
+      <div className="relative h-64 bg-gray-50 overflow-hidden shrink-0">
+        {images.map((img, index) => (
           <img 
             key={index}
             src={img} 
@@ -51,7 +54,7 @@ const ProductCard = ({ product }) => {
         ))}
 
         {/* Setas de Navegação */}
-        {product.images.length > 1 && isHovered && (
+        {images.length > 1 && isHovered && (
           <>
             <button 
               onClick={prevImage}
@@ -71,20 +74,34 @@ const ProductCard = ({ product }) => {
 
         {/* Tag Lançamento */}
         {product.isNew && (
-          <span className="absolute top-2 left-2 bg-brand-secondary text-brand-dark text-[10px] font-black uppercase px-2 py-1 rounded shadow-sm">
+          <span className="absolute top-2 left-2 bg-yellow-400 text-brand-dark text-[10px] font-black uppercase px-2 py-1 rounded shadow-sm z-10">
             Lançamento
           </span>
         )}
       </div>
 
       {/* Informações (Fundo Branco, Texto Escuro) */}
-      <div className="p-4 bg-white relative">
-        <p className="text-gray-500 text-xs mb-1 uppercase tracking-wider font-bold">{product.team}</p>
-        <h3 className="text-gray-800 font-medium text-base mb-2 truncate leading-tight group-hover:text-brand-primary transition-colors">{product.name}</h3>
+      <div className="p-4 bg-white relative flex flex-col flex-grow">
+        {/* Caso team não exista no banco, mostramos a liga ou categoria */}
+        <p className="text-gray-500 text-xs mb-1 uppercase tracking-wider font-bold">
+          {product.team || product.league || 'Camisa'}
+        </p>
         
-        <div className="flex items-center justify-between mt-3">
+        {/* min-h garante que sempre cabem 2 linhas sem quebrar o layout */}
+        <h3 className="text-gray-800 font-medium text-base mb-2 line-clamp-2 min-h-[2.5rem] leading-tight group-hover:text-brand-primary transition-colors">
+          {product.name}
+        </h3>
+        
+        <div className="flex items-center justify-between mt-auto">
           <div className="flex flex-col">
-             <span className="text-gray-400 text-xs line-through">R$ 399,90</span>
+            {/* Usa o preço antigo dinâmico se existir no banco */}
+            {product.oldPrice ? (
+              <span className="text-gray-400 text-xs line-through">
+                {formatPrice(product.oldPrice)}
+              </span>
+            ) : (
+               <span className="h-4"></span> // Mantém o espaço se não tiver oldPrice
+            )}
              <span className="text-brand-primary font-bold text-xl">
                {formatPrice(product.price)}
              </span>
@@ -92,7 +109,7 @@ const ProductCard = ({ product }) => {
           
           <button 
             onClick={handleAddToCart}
-            className="bg-brand-primary/10 text-brand-primary p-2 rounded-full hover:bg-brand-primary hover:text-white transition-colors relative z-20"
+            className="bg-yellow-400/20 text-yellow-600 p-2 rounded-full hover:bg-yellow-400 hover:text-white transition-colors relative z-20"
           >
             <ShoppingCart size={20} />
           </button>

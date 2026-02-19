@@ -1,49 +1,96 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
-import { formatPrice } from '../utils/formatPrice';
-import { ShoppingCart, ArrowLeft, Check, ShieldCheck } from 'lucide-react';
-import Button from '../components/Button';
-import { useState, useEffect } from 'react';
-import { useCart } from '../context/CartContext';
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import {
+  ShoppingCart,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { useCart } from "../context/CartContext";
+import { formatPrice } from "../utils/formatPrice";
 
 const Product = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  console.log("O ID DA URL É:", id);
+  const { addItem } = useCart();
+
+  // ESTADOS DO PRODUTO (Vindos do Banco)
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { addItem } = useCart();
-  
-  // Estados do formulário
-  const [selectedSize, setSelectedSize] = useState(null);
+
+  // ESTADOS DA INTERFACE
   const [mainImage, setMainImage] = useState(0);
-  const [customization, setCustomization] = useState({ name: '', number: '' });
+  const [selectedSize, setSelectedSize] = useState("");
+  const [personalize, setPersonalize] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customNumber, setCustomNumber] = useState("");
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [activeTab, setActiveTab] = useState("description");
 
-  const sizes = ['P', 'M', 'G', 'GG', 'XG'];
+  // Opções fixas caso o banco não mande
+  const AVAILABLE_SIZES = ["P", "M", "G", "GG", "XG"];
+  const KIDS_SIZES = ["2", "4", "6", "8", "10", "12", "14"];
 
+  // 1. BUSCAR PRODUTO DO MONGODB
   useEffect(() => {
-    // Converte o ID da URL para número
-    const productId = Number(id);
-    const found = products.find(p => p.id === productId);
+    const controller = new AbortController();
 
-    if (found) {
-      setProduct(found);
+    async function loadProduct() {
+      try {
+        setLoading(true);
+
+        const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          setProduct(null);
+          return;
+        }
+
+        const data = await res.json();
+        setProduct(data);
+        setMainImage(0);
+      } catch (err) {
+        if (err.name !== "AbortError")
+          console.error("Erro ao buscar produto:", err);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(false);
+
+    loadProduct();
+    return () => controller.abort();
   }, [id]);
 
-  // --- RENDERS DE CARREGAMENTO E ERRO ---
+  // SCROLL PARA O TOPO SEMPRE QUE MUDAR DE PRODUTO
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   if (loading) {
-    return <div className="text-gray-600 text-center mt-20 text-xl font-bold">Carregando informações...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-500 font-bold animate-pulse text-xl">
+          Carregando manto...
+        </p>
+      </div>
+    );
   }
 
   if (!product) {
     return (
-      <div className="text-center mt-20">
-        <h2 className="text-gray-800 text-2xl mb-4 font-bold">Produto não encontrado :/</h2>
-        <button 
-          onClick={() => navigate('/')}
-          className="text-brand-primary underline hover:text-brand-primary/80"
+      <div className="text-center py-20">
+        <p className="text-gray-600 font-bold text-xl">
+          Produto não encontrado :/
+        </p>
+        <button
+          onClick={() => navigate("/catalog")}
+          className="mt-4 underline text-brand-primary font-bold"
         >
           Voltar para a loja
         </button>
@@ -51,147 +98,429 @@ const Product = () => {
     );
   }
 
-  // 3. Produto Carregado (Renderização Normal - TEMA CLARO)
+  // Define se é infantil pela categoria, ou se a string infantil tá no nome
+  const isKids =
+    product.category === "Infantil" ||
+    product.name.toLowerCase().includes("infantil");
+  const displaySizes = isKids
+    ? KIDS_SIZES
+    : product.sizes?.length > 0
+      ? product.sizes
+      : AVAILABLE_SIZES;
+
+  // Preço total com personalização
+  const finalPrice = product.price + (personalize ? 30 : 0);
+
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      alert("Por favor, selecione um tamanho antes de comprar!");
+      return;
+    }
+
+    if (personalize && (!customName || !customNumber)) {
+      alert("Preencha o nome e o número para a personalização.");
+      return;
+    }
+
+    const customization = personalize
+      ? { name: customName, number: customNumber }
+      : null;
+
+    // Passamos o product inteiro, o size escolhido e a personalização (se houver)
+    addItem(product, selectedSize, customization);
+
+    // Feedback visual (pode ser trocado por um toast)
+    alert("Adicionado ao carrinho com sucesso!");
+  };
+
+  // Garante que existe array de imagens
+  const images =
+    product.images?.length > 0
+      ? product.images
+      : ["https://via.placeholder.com/600x800?text=Sem+Imagem"];
+
   return (
-    <div className="animate-fade-in pb-20 pt-8 container mx-auto px-4">
-      {/* Botão Voltar */}
-      <div className="mb-6">
-        <button 
-          onClick={() => navigate('/')} 
-          className="flex items-center text-gray-500 hover:text-brand-primary transition-colors font-medium"
-        >
-          <ArrowLeft size={20} className="mr-2" />
-          Voltar para a loja
-        </button>
+    <div className="bg-white min-h-screen pb-20 animate-fade-in">
+      {/* BREADCRUMB */}
+      <div className="bg-gray-50 border-b border-gray-100 py-3 hidden md:block">
+        <div className="container mx-auto px-4 text-xs text-gray-500 font-medium tracking-wide flex gap-2">
+          <Link to="/" className="hover:text-brand-primary">
+            HOME
+          </Link>
+          <span>/</span>
+          <Link to="/catalog" className="hover:text-brand-primary">
+            CATÁLOGO
+          </Link>
+          <span>/</span>
+          <span className="text-brand-primary">
+            {product.team || product.league || "CAMISA"}
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white p-4 md:p-8 rounded-xl shadow-sm border border-gray-100">
-        
-        {/* COLUNA DA ESQUERDA: Galeria */}
-        <div className="space-y-4">
-          {/* Imagem Principal */}
-          <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden border border-gray-100 relative group">
-            {product.images && product.images.length > 0 ? (
-              <img 
-                src={product.images[mainImage]} 
-                alt={product.name} 
-                className="w-full h-full object-cover mix-blend-multiply"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">Sem imagem</div>
-            )}
-            
-            {product.isNew && (
-              <span className="absolute top-4 left-4 bg-brand-secondary text-brand-dark font-black text-xs uppercase px-3 py-1 rounded shadow-sm">
-                LANÇAMENTO
-              </span>
-            )}
-          </div>
-
-          {/* Miniaturas */}
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            {product.images && product.images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setMainImage(idx)}
-                className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all bg-gray-50 ${
-                  mainImage === idx ? 'border-brand-primary opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
-                }`}
-              >
-                <img src={img} alt="" className="w-full h-full object-cover mix-blend-multiply" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* COLUNA DA DIREITA: Detalhes */}
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-brand-primary font-bold text-sm tracking-widest uppercase mb-2">{product.team}</h2>
-            <h1 className="text-3xl md:text-4xl font-black text-gray-800 mb-4 leading-tight">{product.name}</h1>
-            <div className="flex items-baseline gap-2">
-               <span className="text-4xl font-bold text-brand-primary">{formatPrice(product.price)}</span>
-               <span className="text-sm text-gray-500 font-medium">em até 3x sem juros</span>
-            </div>
-          </div>
-
-          {/* Seletor de Tamanho */}
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-700 font-bold">Escolha o Tamanho</span>
-              <button className="text-brand-primary text-xs underline font-medium hover:text-brand-primary/80">Guia de medidas</button>
-            </div>
-            <div className="flex gap-3">
-              {sizes.map(size => (
+      <div className="container mx-auto px-4 py-6 md:py-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          {/* LADO ESQUERDO: IMAGENS */}
+          <div className="w-full lg:w-1/2 flex flex-col-reverse md:flex-row gap-4">
+            {/* Thumbnails (Lado no Desktop, Baixo no Mobile) */}
+            <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-hide shrink-0">
+              {images.map((img, idx) => (
                 <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`w-12 h-12 rounded border font-bold transition-all shadow-sm ${
-                    selectedSize === size 
-                      ? 'bg-brand-primary border-brand-primary text-white scale-110 shadow-md' 
-                      : 'border-gray-300 text-gray-600 hover:border-brand-primary hover:text-brand-primary bg-white'
+                  key={idx}
+                  onClick={() => setMainImage(idx)}
+                  className={`w-16 h-20 md:w-20 md:h-24 shrink-0 rounded border-2 overflow-hidden transition-all ${
+                    mainImage === idx
+                      ? "border-brand-primary ring-2 ring-brand-primary/20"
+                      : "border-gray-200 opacity-60 hover:opacity-100"
                   }`}
                 >
-                  {size}
+                  <img
+                    src={img}
+                    alt={`Thumb ${idx}`}
+                    className="w-full h-full object-cover mix-blend-multiply"
+                  />
                 </button>
               ))}
             </div>
-            {!selectedSize && <p className="text-xs text-red-500 font-medium mt-2">* Selecione um tamanho</p>}
-          </div>
 
-          {/* Personalização */}
-          <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck size={20} className="text-brand-primary" />
-              <h3 className="text-gray-800 font-bold">Personalização Oficial</h3>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <label className="block text-xs text-gray-600 font-bold mb-1">Nome (+R$ 15,00)</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: RONALDO"
-                  maxLength={12}
-                  className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none uppercase transition-shadow"
-                  value={customization.name}
-                  onChange={(e) => setCustomization({...customization, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 font-bold mb-1">Número</label>
-                <input 
-                  type="number" 
-                  placeholder="10"
-                  maxLength={2}
-                  className="w-full bg-white border border-gray-300 rounded p-2 text-gray-800 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none text-center transition-shadow"
-                  value={customization.number}
-                  onChange={(e) => setCustomization({...customization, number: e.target.value})}
-                />
-              </div>
+            {/* Imagem Principal */}
+            <div className="flex-1 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden relative">
+              {product.isNew && (
+                <span className="absolute top-4 left-4 bg-yellow-400 text-brand-dark text-xs font-black px-3 py-1.5 rounded uppercase shadow-sm z-10">
+                  Lançamento
+                </span>
+              )}
+              <img
+                src={images[mainImage]}
+                alt={product.name}
+                className="w-full h-full object-cover mix-blend-multiply transition-opacity duration-300"
+              />
             </div>
           </div>
 
-          {/* Botão de Compra */}
-          <div className="pt-6 border-t border-gray-100">
-            <Button 
-              variant="primary" 
-              className="w-full flex justify-center items-center gap-2 text-lg py-4 font-bold shadow-lg shadow-brand-primary/20 hover:shadow-brand-primary/40 transition-all hover:-translate-y-1"
-              disabled={!selectedSize} 
-              onClick={() => {
-                addItem(product, selectedSize, customization);
-                alert("Produto adicionado ao carrinho!"); 
-              }}
+          {/* LADO DIREITO: INFORMAÇÕES DO PRODUTO */}
+          <div className="w-full lg:w-1/2 flex flex-col">
+            <p className="text-brand-primary font-bold tracking-wider uppercase text-sm mb-2">
+              {product.team || product.league}
+            </p>
+            <h1 className="text-2xl md:text-4xl font-black text-gray-800 leading-tight mb-4 uppercase italic">
+              {product.name}
+            </h1>
+
+            {/* PREÇO */}
+            <div className="flex items-end gap-3 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100 border-l-4 border-l-brand-primary">
+              <div className="flex flex-col">
+                {product.oldPrice && (
+                  <span className="text-gray-400 line-through text-sm font-medium">
+                    {formatPrice(product.oldPrice)}
+                  </span>
+                )}
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl md:text-5xl font-black text-gray-800 tracking-tighter">
+                    {formatPrice(finalPrice)}
+                  </span>
+                  <span className="text-sm font-bold text-gray-500 mb-1.5">
+                    no PIX
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500 font-medium mt-1">
+                  ou 12x de {formatPrice(finalPrice / 12)} s/ juros no cartão
+                </span>
+              </div>
+            </div>
+
+            {/* SELEÇÃO DE TAMANHO */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-bold text-gray-700 text-sm tracking-wide uppercase">
+                  Selecione o Tamanho
+                </span>
+                <button
+                  onClick={() => setShowSizeGuide(!showSizeGuide)}
+                  className="text-brand-primary text-xs font-bold hover:underline uppercase tracking-wide flex items-center gap-1"
+                >
+                  <AlertCircle size={14} /> Tabela de Medidas
+                </button>
+              </div>
+
+              <div className="grid grid-cols-5 md:grid-cols-5 gap-2">
+                {displaySizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`py-3 rounded font-black transition-all border-2 ${
+                      selectedSize === size
+                        ? "border-brand-primary bg-brand-primary/10 text-brand-dark"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tabela de Medidas Expandível */}
+              {showSizeGuide && (
+                <div className="mt-3 p-4 bg-gray-50 rounded border border-gray-200 text-sm text-gray-600 animate-fade-in">
+                  <p className="font-bold mb-2">
+                    Medidas Aproximadas (Largura x Altura):
+                  </p>
+                  <ul className="space-y-1">
+                    {isKids ? (
+                      <>
+                        <li>
+                          <strong>2:</strong> 33x44 cm (1-2 anos)
+                        </li>
+                        <li>
+                          <strong>4:</strong> 35x47 cm (3-4 anos)
+                        </li>
+                        <li>
+                          <strong>6:</strong> 37x50 cm (5-6 anos)
+                        </li>
+                        <li>
+                          <strong>8:</strong> 39x53 cm (7-8 anos)
+                        </li>
+                        <li>
+                          <strong>10:</strong> 41x56 cm (9-10 anos)
+                        </li>
+                        <li>
+                          <strong>12:</strong> 43x59 cm (11-12 anos)
+                        </li>
+                        <li>
+                          <strong>14:</strong> 45x62 cm (13-14 anos)
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li>
+                          <strong>P:</strong> 50x71 cm
+                        </li>
+                        <li>
+                          <strong>M:</strong> 52x73 cm
+                        </li>
+                        <li>
+                          <strong>G:</strong> 54x75 cm
+                        </li>
+                        <li>
+                          <strong>GG:</strong> 56x77 cm
+                        </li>
+                        <li>
+                          <strong>XG (2XL):</strong> 58x80 cm
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                  <p className="text-xs mt-2 text-gray-400 italic">
+                    * Pode haver variação de 1 a 3 cm.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* PERSONALIZAÇÃO (+ R$30) */}
+            <div className="mb-8 p-5 bg-white border-2 border-dashed border-gray-200 rounded-lg">
+              <label className="flex items-center cursor-pointer mb-3">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={personalize}
+                    onChange={(e) => {
+                      setPersonalize(e.target.checked);
+                      if (!e.target.checked) {
+                        setCustomName("");
+                        setCustomNumber("");
+                      }
+                    }}
+                  />
+                  <div
+                    className={`block w-10 h-6 rounded-full transition-colors ${personalize ? "bg-brand-primary" : "bg-gray-300"}`}
+                  ></div>
+                  <div
+                    className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${personalize ? "transform translate-x-4" : ""}`}
+                  ></div>
+                </div>
+                <div className="ml-3 font-bold text-gray-700 uppercase tracking-wide text-sm">
+                  Personalizar Camisa{" "}
+                  <span className="text-brand-primary">(+ R$ 30,00)</span>
+                </div>
+              </label>
+
+              {personalize && (
+                <div className="grid grid-cols-2 gap-3 mt-4 animate-fade-in">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Nome nas Costas
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: SILVA"
+                      maxLength="12"
+                      value={customName}
+                      onChange={(e) =>
+                        setCustomName(e.target.value.toUpperCase())
+                      }
+                      className="w-full border border-gray-300 rounded p-2 text-sm uppercase outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                      Número
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: 10"
+                      maxLength="2"
+                      value={customNumber}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, "");
+                        setCustomNumber(val);
+                      }}
+                      className="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all"
+                    />
+                  </div>
+                  <p className="col-span-2 text-[10px] text-gray-400 italic mt-1">
+                    * Produtos personalizados não podem ser trocados ou
+                    devolvidos.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* BOTÃO COMPRAR */}
+            <button
+              onClick={handleAddToCart}
+              className="w-full bg-brand-primary hover:bg-yellow-500 text-brand-dark font-black text-lg uppercase tracking-wider py-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3 mb-6"
             >
               <ShoppingCart size={24} />
               Adicionar ao Carrinho
-            </Button>
-            <p className="text-center text-gray-500 text-xs mt-4 flex items-center justify-center gap-1 font-medium">
-              <Check size={14} className="text-green-500"/>
-              Estoque disponível. Envio imediato.
-            </p>
+            </button>
+
+            {/* VANTAGENS (TRUST BADGES) */}
+            <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-6 mt-2">
+              <div className="flex flex-col items-center text-center">
+                <ShieldCheck size={28} className="text-gray-400 mb-2" />
+                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                  Compra
+                  <br />
+                  Segura
+                </span>
+              </div>
+              <div className="flex flex-col items-center text-center border-l border-r border-gray-100">
+                <Truck size={28} className="text-gray-400 mb-2" />
+                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                  Frete Grátis
+                  <br />
+                  Todo Brasil
+                </span>
+              </div>
+              <div className="flex flex-col items-center text-center">
+                <RotateCcw size={28} className="text-gray-400 mb-2" />
+                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">
+                  Garantia de
+                  <br />
+                  Qualidade
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DESCRIÇÃO E DETALHES - ABAS */}
+        <div className="mt-16 border-t border-gray-200 pt-10">
+          <div className="flex gap-8 border-b border-gray-200 mb-6 px-2">
+            <button
+              onClick={() => setActiveTab("description")}
+              className={`pb-3 text-sm font-black uppercase tracking-widest transition-colors relative ${
+                activeTab === "description"
+                  ? "text-gray-800"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              Descrição do Produto
+              {activeTab === "description" && (
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-brand-primary"></span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("shipping")}
+              className={`pb-3 text-sm font-black uppercase tracking-widest transition-colors relative ${
+                activeTab === "shipping"
+                  ? "text-gray-800"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              Prazos e Envios
+              {activeTab === "shipping" && (
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-brand-primary"></span>
+              )}
+            </button>
           </div>
 
+          <div className="px-2 pb-10">
+            {activeTab === "description" && (
+              <div className="prose max-w-none text-gray-600 text-sm md:text-base leading-relaxed animate-fade-in">
+                <p>
+                  {product.description ||
+                    "As camisas da versão torcedor (fans) são projetadas para oferecer o máximo de conforto para o uso no dia a dia. Com um corte um pouco mais solto do que as versões de jogador, elas garantem liberdade de movimento, seja na arquibancada ou em casa."}
+                </p>
+                <ul className="mt-4 space-y-2">
+                  <li>
+                    <strong>Tecnologia do Tecido:</strong> Absorção de umidade
+                    que mantém você seco e confortável.
+                  </li>
+                  <li>
+                    <strong>Escudo e Logos:</strong> Bordados de alta qualidade
+                    e durabilidade.
+                  </li>
+                  <li>
+                    <strong>Composição:</strong> 100% Poliéster.
+                  </li>
+                  <li>
+                    <strong>Origem:</strong> Importado (Qualidade Premium
+                    Tailandesa).
+                  </li>
+                  <li>
+                    <strong>Indicado para:</strong> Dia a dia e uso casual.
+                  </li>
+                </ul>
+                <p className="mt-4 text-xs italic text-gray-400">
+                  As imagens do site são meramente ilustrativas. O produto final
+                  pode sofrer pequenas alterações de cor ou detalhes do
+                  fornecedor.
+                </p>
+              </div>
+            )}
+
+            {activeTab === "shipping" && (
+              <div className="prose max-w-none text-gray-600 text-sm md:text-base leading-relaxed animate-fade-in">
+                <p>
+                  Nossos produtos são importados e enviados diretamente das
+                  fábricas parceiras para a sua casa (Envio Internacional).
+                </p>
+                <ul className="mt-4 space-y-2">
+                  <li>
+                    <strong>Prazo de Processamento:</strong> 3 a 7 dias úteis
+                    após a confirmação do pagamento.
+                  </li>
+                  <li>
+                    <strong>Prazo de Entrega:</strong> 15 a 25 dias úteis
+                    (geralmente chega antes).
+                  </li>
+                  <li>
+                    <strong>Rastreamento:</strong> O código de rastreio será
+                    enviado para o seu e-mail assim que o produto for
+                    despachado.
+                  </li>
+                  <li>
+                    <strong>Taxas Alfandegárias:</strong> Quase 100% dos nossos
+                    pacotes passam sem taxas. Caso haja taxação, a
+                    responsabilidade de pagamento é do comprador.
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
