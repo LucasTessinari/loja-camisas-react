@@ -2,7 +2,14 @@ import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Link } from "react-router-dom";
-import { Shield, Zap, RefreshCw, Truck, ChevronRight, Heart } from "lucide-react"; // Importei o Heart aqui
+import {
+  Shield,
+  Zap,
+  RefreshCw,
+  Truck,
+  ChevronRight,
+  Heart,
+} from "lucide-react"; // Importei o Heart aqui
 import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext"; // Usando o Contexto de favoritos padrão
 import { useProducts } from "../hooks/useProducts";
@@ -13,12 +20,16 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-import logoBrasileirao from '../../public/images/logos/brasileirao-logo.png';
-import logoBundesliga from '../../public/images/logos/bundesliga-logo.png';
-import logoLaliga from '../../public/images/logos/laliga-logo.svg';
-import logoLigueOne from '../../public/images/logos/ligue1-logo.png';
-import logoPremierleague from '../../public/images/logos/premier-league-logo.svg';
-import logoSeriea from '../../public/images/logos/serie-a-logo.png';
+import logoBrasileirao from "../../public/images/logos/brasileirao-logo.png";
+import logoBundesliga from "../../public/images/logos/bundesliga-logo.png";
+import logoLaliga from "../../public/images/logos/laliga-logo.svg";
+import logoLigueOne from "../../public/images/logos/ligue1-logo.png";
+import logoPremierleague from "../../public/images/logos/premier-league-logo.svg";
+import logoSeriea from "../../public/images/logos/serie-a-logo.png";
+
+import banner1 from "../../public/images/banners/banner1.png";
+import banner2 from "../../public/images/banners/banner2.svg";
+import banner3 from "../../public/images/banners/banner3.svg";
 
 // --- CSS PERSONALIZADO (Setas Minimalistas) ---
 const customStyles = `
@@ -57,21 +68,9 @@ const customStyles = `
 
 // DADOS MOCK (Banners)
 const HERO_SLIDES = [
-  {
-    id: 1,
-    img: "https://i.imgur.com/QkCc5J9.jpeg", // Banner Lançamentos
-    link: "/catalog?tag=lancamento",
-  },
-  {
-    id: 2,
-    img: "https://i.imgur.com/Pz5x0yL.jpeg", // Banner Champions
-    link: "/catalog?tag=europeus",
-  },
-  {
-    id: 3,
-    img: "https://i.imgur.com/uFp6XzB.jpeg", // Banner Promoções
-    link: "/catalog?tag=oferta",
-  },
+  { id: 2, img: banner2, link: "/catalog?category=Todos" },
+  { id: 1, img: banner1, link: "/catalog?category=Todos" },
+  { id: 3, img: banner3, link: "/catalog?category=Todos" },
 ];
 
 // LOGOS DOS CAMPEONATOS (Links Diretos da Wikipedia - Transparentes)
@@ -99,7 +98,7 @@ const LEAGUES = [
   {
     name: "Ligue 1",
     logo: logoLigueOne,
-  }
+  },
 ];
 
 // MOCK DE PRODUTOS (Para Vitrine)
@@ -109,10 +108,10 @@ import { products as mockProducts } from "../data/products"; // Renomeei para mo
 const Home = () => {
   const { products, loading } = useProducts();
   const { toggleFavorite, isFavorite } = useFavorites(); // Hooks de favoritos
-  
+
   console.log("products from API", products);
   const showcaseProducts = products.slice(0, 10);
-  
+
   if (loading) return <p className="p-4">Carregando produtos...</p>;
 
   return (
@@ -120,7 +119,7 @@ const Home = () => {
       <style>{customStyles}</style>
 
       {/* 1. HERO SLIDER */}
-      <div className="w-full h-[180px] md:h-[400px] relative group">
+      <div className="w-full h-[180px] sm:h-[300px] md:h-[400px] lg:h-[450px] relative group overflow-hidden">
         <Swiper
           modules={[Autoplay, Pagination, Navigation]}
           pagination={{ clickable: true }}
@@ -144,34 +143,52 @@ const Home = () => {
       </div>
 
       {/* 2. BARRA DE CONFIANÇA */}
-      <div className="bg-white border-b border-gray-200 py-4 shadow-sm relative z-10">
-        <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <Truck size={24} className="text-brand-primary" />
-            <div className="text-xs">
-              <p className="font-bold text-gray-800">FRETE GRÁTIS</p>
-              <p className="text-gray-500">Consulte condições</p>
+      {/* 2. BARRA DE CONFIANÇA (Espaçamento Organizado) */}
+      <div className="bg-white border-b border-gray-200 py-6 shadow-sm relative z-10 w-full overflow-hidden">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* Usando flex + justify-between no PC, e grid no Celular para ficar perfeito */}
+          <div className="grid grid-cols-2 lg:flex lg:flex-row lg:justify-between lg:items-center gap-y-6 gap-x-4">
+            <div className="flex items-center justify-center lg:justify-start gap-3">
+              <Truck size={28} className="text-brand-primary flex-shrink-0" />
+              <div className="text-xs text-left">
+                <p className="font-bold text-gray-800 uppercase tracking-wide">
+                  FRETE GRÁTIS
+                </p>
+                <p className="text-gray-500">Consulte condições</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <RefreshCw size={24} className="text-brand-primary" />
-            <div className="text-xs">
-              <p className="font-bold text-gray-800">TROCA FÁCIL</p>
-              <p className="text-gray-500">Sem burocracia</p>
+
+            <div className="flex items-center justify-center lg:justify-start gap-3">
+              <RefreshCw
+                size={28}
+                className="text-brand-primary flex-shrink-0"
+              />
+              <div className="text-xs text-left">
+                <p className="font-bold text-gray-800 uppercase tracking-wide">
+                  TROCA FÁCIL
+                </p>
+                <p className="text-gray-500">Sem burocracia</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <Shield size={24} className="text-brand-primary" />
-            <div className="text-xs">
-              <p className="font-bold text-gray-800">SITE SEGURO</p>
-              <p className="text-gray-500">Compra protegida</p>
+
+            <div className="flex items-center justify-center lg:justify-start gap-3">
+              <Shield size={28} className="text-brand-primary flex-shrink-0" />
+              <div className="text-xs text-left">
+                <p className="font-bold text-gray-800 uppercase tracking-wide">
+                  SITE SEGURO
+                </p>
+                <p className="text-gray-500">Compra protegida</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-center md:justify-start gap-3">
-            <Zap size={24} className="text-brand-primary" />
-            <div className="text-xs">
-              <p className="font-bold text-gray-800">ENVIO RÁPIDO</p>
-              <p className="text-gray-500">Postagem imediata</p>
+
+            <div className="flex items-center justify-center lg:justify-start gap-3">
+              <Zap size={28} className="text-brand-primary flex-shrink-0" />
+              <div className="text-xs text-left">
+                <p className="font-bold text-gray-800 uppercase tracking-wide">
+                  ENVIO RÁPIDO
+                </p>
+                <p className="text-gray-500">Postagem imediata</p>
+              </div>
             </div>
           </div>
         </div>
@@ -200,7 +217,7 @@ const Home = () => {
               <SwiperSlide key={idx}>
                 <Link
                   to={`/catalog?category=${encodeURIComponent(league.name)}`}
-                  className="flex items-center justify-center bg-white hover:bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg h-24 w-full transition-all group p-4 shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden"
+                  className="flex items-center justify-center bg-white hover:bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg h-24 w-full transition-all hover:scale-105 group p-4 shadow-sm shadow-black/20 hover:shadow-md hover:shadow-black/20 cursor-pointer relative overflow-hidden"
                 >
                   {/* IMAGEM SEMPRE COLORIDA + ZOOM NO HOVER */}
                   <img
@@ -246,10 +263,8 @@ const Home = () => {
             return (
               <SwiperSlide key={prod._id} className="h-auto">
                 <div className="group block bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden h-full flex flex-col relative">
-                  
                   {/* IMAGEM E MINI-CARROSSEL */}
                   <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 always-show-arrows shrink-0">
-                    
                     {/* Tag Lançamento */}
                     {prod.isNew && (
                       <span className="absolute top-2 left-2 bg-yellow-400 text-[#FFFFFF] text-[10px] font-bold px-2 py-1 rounded uppercase z-10 shadow-sm pointer-events-none">
@@ -258,21 +273,25 @@ const Home = () => {
                     )}
 
                     {/* Botão de Favoritar (Fica no canto superior direito) */}
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.preventDefault(); // Evita que o Link envolta seja ativado
                         toggleFavorite(prod);
                       }}
                       className="absolute top-2 right-2 p-1.5 md:p-2 rounded-full bg-white/90 hover:bg-white shadow-sm z-20 transition-all hover:scale-110 border border-gray-100/50 group/heart"
-                      aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                      aria-label={
+                        favorite
+                          ? "Remover dos favoritos"
+                          : "Adicionar aos favoritos"
+                      }
                     >
-                      <Heart 
-                        size={18} 
+                      <Heart
+                        size={18}
                         className={`transition-colors duration-300 ${
-                          favorite 
-                            ? 'fill-red-500 text-red-500' 
-                            : 'text-gray-400 group-hover/heart:text-red-400'
-                        }`} 
+                          favorite
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400 group-hover/heart:text-red-400"
+                        }`}
                       />
                     </button>
 
@@ -320,8 +339,9 @@ const Home = () => {
                         R$ {prod.price.toFixed(2).replace(".", ",")}
                       </p>
                       <p className="text-[10px] text-gray-500 font-medium">
-                        10x de R$ {(prod.price / 10).toFixed(2).replace(".", ",")}{" "}
-                        s/ juros
+                        10x de R${" "}
+                        {(prod.price / 10).toFixed(2).replace(".", ",")} s/
+                        juros
                       </p>
                     </div>
                   </Link>

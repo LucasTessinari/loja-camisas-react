@@ -141,9 +141,14 @@ const Header = () => {
         <div className="container mx-auto px-4 flex justify-between items-center">
           {/* Lado Esquerdo */}
           <div className="flex gap-4">
-            <span className="cursor-pointer hover:text-gray-300 transition-colors">
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá! Gostaria de falar com o atendimento da NetFut.")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-pointer hover:text-green-400 transition-colors font-medium"
+            >
               Fale Conosco
-            </span>
+            </a>
           </div>
 
           {/* Frase Central com Link pro WhatsApp (COM ÍCONE OFICIAL) */}

@@ -122,16 +122,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
-                <Phone size={16} className="text-brand-secondary" /> (11)
-                3028-5355
+                <Phone size={16} className="text-brand-secondary" /> (27)
+                99967-4761
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
                 <Mail size={16} className="text-brand-secondary" />{" "}
-                <a href="mailto:sac@netfut.com" className="hover:underline">sac@netfut.com</a>
+                <a href="mailto:sac@netfut.com" className="hover:underline">sac.netfut@gmail.com</a>
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
-                <MapPin size={16} className="text-brand-secondary" /> São Paulo,
-                SP
+                <MapPin size={16} className="text-brand-secondary" /> Vitória,
+                ES
               </li>
             </ul>
           </div>
@@ -164,8 +164,7 @@ const Footer = () => {
             © 2026 NetFut Artigos Esportivos S.A. Todos os direitos reservados.
           </p>
           <p>
-            CNPJ: 12.345.678/0001-90 | Av. Magalhães de Castro, 4800 - Cidade
-            Jardim, São Paulo - SP
+            CNPJ: 12.345.678/0001-90 | Rua Franscisco Rubim, 260, Bento Ferreira - Vitória/ES
           </p>
         </div>
       </div>
