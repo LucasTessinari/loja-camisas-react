@@ -12,6 +12,13 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
+import logoBrasileirao from '../../public/images/logos/brasileirao-logo.png';
+import logoBundesliga from '../../public/images/logos/bundesliga-logo.png';
+import logoLaliga from '../../public/images/logos/laliga-logo.svg';
+import logoLigueOne from '../../public/images/logos/ligue1-logo.png';
+import logoPremierleague from '../../public/images/logos/premier-league-logo.svg';
+import logoSeriea from '../../public/images/logos/serie-a-logo.png';
+
 // --- CSS PERSONALIZADO (Setas Minimalistas) ---
 const customStyles = `
     /* Setas do Swiper - Pequenas e Brancas */
@@ -70,36 +77,28 @@ const HERO_SLIDES = [
 const LEAGUES = [
   {
     name: "Brasileirão",
-    logo: "https://upload.wikimedia.org/wikipedia/pt/4/42/Campeonato_Brasileiro_S%C3%A9rie_A_logo.png",
+    logo: logoBrasileirao,
   },
   {
     name: "Premier League",
-    logo: "https://upload.wikimedia.org/wikipedia/pt/f/f2/Premier_League_Logo.svg",
+    logo: logoPremierleague,
   },
   {
     name: "La Liga",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/LaLiga_logo_2023.svg/1200px-LaLiga_logo_2023.svg.png",
+    logo: logoLaliga,
   },
   {
     name: "Serie A",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/e/e9/Serie_A_logo_2019.svg",
+    logo: logoSeriea,
   },
   {
     name: "Bundesliga",
-    logo: "https://upload.wikimedia.org/wikipedia/pt/d/d2/Bundesliga_logo_%282017%29.svg",
+    logo: logoBundesliga,
   },
   {
     name: "Ligue 1",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/5e/Ligue_1_Uber_Eats_logo.svg",
-  },
-  {
-    name: "Champions",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/e/e9/UEFA_Champions_League_logo.svg",
-  },
-  {
-    name: "Libertadores",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/2/23/Copa_Libertadores_logo.svg",
-  },
+    logo: logoLigueOne,
+  }
 ];
 
 // MOCK DE PRODUTOS (Para Vitrine)
