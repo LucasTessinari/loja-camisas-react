@@ -12,26 +12,27 @@ const CLEAR_CART = "CLEAR_CART";
 // Reducer
 const cartReducer = (state, action) => {
   switch (action.type) {
-    case ADD_ITEM:
+    case ADD_ITEM: {
       const existingItemIndex = state.findIndex(
         (item) =>
-          item.id === action.payload.id && item.size === action.payload.size,
+          item.id === action.payload.id && item.size === action.payload.size
       );
 
       if (existingItemIndex > -1) {
-        // Forma correta: Map cria um NOVO array e um NOVO objeto para o item alterado
         return state.map((item, index) =>
           index === existingItemIndex
-            ? { ...item, quantity: item.quantity + 1 } // Cria cópia do objeto com qtd nova
-            : item,
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
+
       return [...state, { ...action.payload, quantity: 1 }];
+    }
 
     case REMOVE_ITEM:
       return state.filter(
         (item) =>
-          !(item.id === action.payload.id && item.size === action.payload.size),
+          !(item.id === action.payload.id && item.size === action.payload.size)
       );
 
     case UPDATE_QUANTITY:
@@ -60,6 +61,7 @@ const cartReducer = (state, action) => {
 export const CartProvider = ({ children }) => {
   const [cartItems, dispatch] = useReducer(cartReducer, []);
 
+  // Carrega do localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem("futshop_cart");
     if (savedCart) {
@@ -67,6 +69,7 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
+  // Salva no localStorage
   useEffect(() => {
     localStorage.setItem("futshop_cart", JSON.stringify(cartItems));
   }, [cartItems]);
@@ -75,34 +78,33 @@ export const CartProvider = ({ children }) => {
     dispatch({
       type: ADD_ITEM,
       payload: {
-        id: product.id,
+        id: product._id || product.id, // garante compatibilidade com Mongo
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: product.images?.[0] || "",
         size,
-        customization,
+        customization: customization || {}, // nunca null
       },
     });
   };
 
-  
   const removeItem = (id, size) => {
     dispatch({ type: REMOVE_ITEM, payload: { id, size } });
   };
-  
+
   const updateQuantity = (id, size, quantity) => {
     if (quantity < 1) return;
     dispatch({ type: UPDATE_QUANTITY, payload: { id, size, quantity } });
   };
-  
+
   const clearCart = () => {
     dispatch({ type: CLEAR_CART });
   };
-  
+
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartTotal = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
-    0,
+    0
   );
 
   return (
@@ -122,8 +124,7 @@ export const CartProvider = ({ children }) => {
   );
 };
 
-// --- AQUI ESTAVA O ERRO ---
-// Você provavelmente esqueceu de exportar essa função "useCart" no final
+// Hook para usar o carrinho
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context)

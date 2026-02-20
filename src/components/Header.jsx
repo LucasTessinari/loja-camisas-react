@@ -3,13 +3,16 @@ import { ShoppingCart, Menu, Search, User, Heart } from "lucide-react";
 import { Phone } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
-import { useFavorites } from "../context/FavoritesContext"; // Import do FavoritesContext
+import { useFavorites } from "../context/FavoritesContext";
+import { useAuth } from "../context/AuthContext"; // Import do Contexto de Autenticação
+import { useGoogleLogin } from "@react-oauth/google"; // Hook do Google
 import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems } = useCart();
-  const { favorites } = useFavorites(); // Puxando a lista de favoritos
+  const { favorites } = useFavorites();
+  const { user, login, logout } = useAuth(); // Puxando dados do usuário logado
 
   // Coloque o número do WhatsApp da loja aqui (Código País + DDD + Número)
   const WHATSAPP_NUMBER = "5511999999999";
@@ -17,6 +20,32 @@ const Header = () => {
   const WHATSAPP_MESSAGE = encodeURIComponent(
     "Olá! Não encontrei um modelo no site, vocês conseguem para mim?",
   );
+
+  // Função que dispara o pop-up do Google
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // Pega as informações do usuário logado (Nome, Foto, Email)
+        const res = await fetch(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          },
+        );
+        const userInfo = await res.json();
+
+        // Salva no nosso Contexto
+        login({
+          name: userInfo.name,
+          email: userInfo.email,
+          picture: userInfo.picture,
+        });
+      } catch (error) {
+        console.error("Erro ao buscar dados do Google", error);
+      }
+    },
+    onError: () => console.log("Falha no Login do Google"),
+  });
 
   return (
     <header className="w-full font-sans">
@@ -40,7 +69,6 @@ const Header = () => {
             >
               <span className="flex items-center gap-1.5">
                 Não encontrou seu manto?
-                {/* Ícone oficial do WhatsApp no meio do texto */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -50,7 +78,7 @@ const Header = () => {
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.885-9.885 9.885m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
                 </svg>
                 <span className="font-bold underline decoration-green-400 decoration-2 underline-offset-2">
-                  Chame no Zap
+                  Chame no WhatsApp
                 </span>
                 <span>e nós conseguimos!</span>
               </span>
@@ -101,10 +129,53 @@ const Header = () => {
 
             {/* Ícones da Direita */}
             <div className="flex items-center gap-6 text-white">
-              <div className="hidden md:flex flex-col items-center text-xs gap-1 cursor-pointer hover:text-yellow-400 transition-colors">
-                <User size={24} />
-                <span>Entrar</span>
-              </div>
+              {/* ÁREA DO USUÁRIO LOGADO OU DESLOGADO */}
+              {user ? (
+                <div className="hidden md:flex flex-col items-center text-xs gap-1 relative group cursor-pointer hover:text-yellow-400 transition-colors">
+                  {/* Se tiver foto usa a foto, se não usa a primeira letra do nome */}
+                  {user.picture ? (
+                    <img
+                      src={user.picture}
+                      alt="Avatar"
+                      className="w-6 h-6 rounded-full border border-transparent group-hover:border-yellow-400 transition-colors"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-brand-primary text-brand-dark flex items-center justify-center font-bold text-[10px] border border-transparent group-hover:border-yellow-400">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span>Olá, {user.name.split(" ")[0]}</span>
+
+                  {/* Dropdown de Sair - pt-2 (padding top invisível) para criar uma "ponte" para o mouse */}
+                  <div className="absolute top-full pt-2 hidden group-hover:block w-32 z-50">
+                    <div className="bg-white text-gray-800 p-3 rounded shadow-xl border border-gray-100 text-center relative">
+                      {/* Setinha apontando pra cima (opcional para ficar bonito) */}
+                      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rotate-45 border-l border-t border-gray-100"></div>
+
+                      <p
+                        className="font-bold text-sm mb-2 truncate"
+                        title={user.name}
+                      >
+                        {user.name}
+                      </p>
+                      <button
+                        onClick={logout}
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-500 font-bold py-1.5 rounded transition-colors"
+                      >
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => handleGoogleLogin()}
+                  className="hidden md:flex flex-col items-center text-xs gap-1 cursor-pointer hover:text-yellow-400 transition-colors"
+                >
+                  <User size={24} />
+                  <span>Entrar</span>
+                </div>
+              )}
 
               {/* Botão de Favoritos no Header com Badge */}
               <Link
@@ -123,6 +194,7 @@ const Header = () => {
                 )}
               </Link>
 
+              {/* Botão de Carrinho */}
               <Link
                 to="/cart"
                 className="flex flex-col items-center text-xs gap-1 relative group hover:text-yellow-400 transition-colors"
@@ -217,7 +289,7 @@ const Header = () => {
               </button>
             </div>
 
-            {/* Aviso Whatsapp no Mobile também (Opcional, mas recomendado) */}
+            {/* Aviso Whatsapp no Mobile também */}
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}
               target="_blank"
@@ -225,8 +297,39 @@ const Header = () => {
               className="bg-green-50 text-green-700 p-3 rounded-lg text-sm mb-4 font-medium flex items-center gap-2"
             >
               <Phone size={16} />
-              Não achou seu manto? Peça no Zap!
+              Não achou seu manto? Peça no WhatsApp!
             </a>
+
+            {/* PERFIL MOBILE */}
+            <div className="border-b border-gray-100 pb-4 mb-2">
+              {user ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={user.picture}
+                      alt="Avatar"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <span className="text-gray-800 font-bold">
+                      Olá, {user.name.split(" ")[0]}
+                    </span>
+                  </div>
+                  <button
+                    onClick={logout}
+                    className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1 rounded"
+                  >
+                    Sair
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleGoogleLogin()}
+                  className="w-full flex items-center justify-center gap-2 bg-brand-primary text-white font-bold py-2 rounded-lg"
+                >
+                  <User size={18} /> Entrar com Google
+                </button>
+              )}
+            </div>
 
             {/* Menu Mobile Favoritos */}
             <div className="flex justify-between items-center border-b border-gray-100 pb-2">

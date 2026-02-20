@@ -9,16 +9,17 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Button from "../components/Button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-import visaLogo from '../assets/icons/visa.svg';
-import masterLogo from '../assets/icons/mastercard.svg';
-import eloLogo from '../assets/icons/elo.svg';
-import pixLogo from '../assets/icons/pix.svg';
+import visaLogo from "../assets/icons/visa.svg";
+import masterLogo from "../assets/icons/mastercard.svg";
+import eloLogo from "../assets/icons/elo.svg";
+import pixLogo from "../assets/icons/pix.svg";
 
 const Cart = () => {
   const { cartItems, removeItem, updateQuantity, cartTotal, totalItems } =
     useCart();
+  const navigate = useNavigate();
 
   // CARRINHO VAZIO
   if (cartItems.length === 0) {
@@ -84,12 +85,14 @@ const Cart = () => {
                     </p>
 
                     {/* Mostra personalização se existir */}
-                    {(item.customization.name || item.customization.number) && (
-                      <div className="mt-2 text-xs text-brand-primary font-bold bg-brand-primary/5 px-2 py-1 rounded inline-flex items-center gap-1 border border-brand-primary/10">
-                        <ShieldCheck size={12} /> {item.customization.name}{" "}
-                        {item.customization.number}
-                      </div>
-                    )}
+                    {item.customization &&
+                      (item.customization.name ||
+                        item.customization.number) && (
+                        <div className="mt-2 text-xs text-brand-primary font-bold bg-brand-primary/5 px-2 py-1 rounded inline-flex items-center gap-1 border border-brand-primary/10">
+                          <ShieldCheck size={12} /> {item.customization.name}{" "}
+                          {item.customization.number}
+                        </div>
+                      )}
                   </div>
 
                   {/* Preço Unitário */}
@@ -167,10 +170,10 @@ const Cart = () => {
 
             {/* Link para o Checkout */}
             <Button
-              variant="primary"
-              className="w-full flex justify-center items-center gap-2 py-4 text-lg font-bold text-white shadow-xl shadow-brand-primary/20 hover:shadow-brand-primary/40 hover:-translate-y-1 transition-all"
+              onClick={() => navigate("/checkout")}
+              className="w-full bg-brand-primary hover:bg-yellow-500 text-[#e8e8e8] font-black text-lg uppercase tracking-wider py-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
             >
-              Finalizar Compra <ArrowRight size={20} />
+              Finalizar Compra
             </Button>
 
             <div className="mt-6 flex justify-center gap-3 items-center">

@@ -13,52 +13,71 @@ const Checkout = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const PHONE_NUMBER = '5527999674761';
-
   if (cartItems.length === 0 && !isSuccess) {
     navigate('/');
     return null;
   }
 
-  const handleFinishOrder = (e) => {
+  // NOVA FUNÇÃO: finalizar indo para o Mercado Pago
+  const handleFinishOrder = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    // 1. Captura os dados do formulário
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    try {
+      // 1. Captura dados do formulário
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
 
-    // 2. Monta a mensagem do WhatsApp
-    let message = `*NOVO PEDIDO - FUTSHOP* ⚽\n\n`;
-    
-    message += `*👤 Cliente:* ${data.name}\n`;
-    message += `*📍 Endereço:* ${data.address}, ${data.number} - ${data.city}\n`;
-    message += `*💳 Pagamento:* ${paymentMethod === 'pix' ? 'PIX (10% OFF)' : 'Cartão de Crédito'}\n\n`;
-    
-    message += `*🛒 ITENS DO PEDIDO:*\n`;
-    cartItems.forEach(item => {
-      message += `▪ ${item.quantity}x ${item.name} (${item.size})\n`;
-      if(item.customization.name) {
-         message += `   _Pers: ${item.customization.name} ${item.customization.number}_\n`;
+      // 2. Monta array de itens no formato esperado pelo backend
+      const items = cartItems.map((item) => ({
+        title: item.name,
+        unit_price: Number(item.price),
+        quantity: Number(item.quantity),
+      }));
+
+      const body = {
+        items,
+        payer: {
+          email: data.email,
+          name: data.name,
+        },
+        paymentMethod, // só pra você ter essa info no backend se quiser
+        shipping: {
+          address: data.address,
+          number: data.number,
+          city: data.city,
+          cep: data.cep,
+          complement: data.complement || "",
+        },
+      };
+
+      // 3. Chama o backend para criar a preferência do Mercado Pago
+      const res = await fetch("http://localhost:5000/api/payments/create_preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.init_point) {
+        console.error("Erro ao criar preferência:", result);
+        alert("Erro ao iniciar o pagamento. Tente novamente.");
+        setLoading(false);
+        return;
       }
-    });
 
-    const finalTotal = paymentMethod === 'pix' ? cartTotal * 0.9 : cartTotal;
-    message += `\n*💰 TOTAL:* ${formatPrice(finalTotal)}\n`;
-    message += `------------------------------\n`;
-    message += `Aguardo a confirmação!`;
-
-    // 3. Cria o link e abre
-    const link = `https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(message)}`;
-    
-    // Simula processamento visual
-    setTimeout(() => {
-      window.open(link, '_blank'); // Abre o Zap numa nova aba
-      setLoading(false);
-      setIsSuccess(true);
+      // 4. Limpa carrinho e marca sucesso (caso queira usar tela de Sucesso depois)
       clearCart();
-      window.scrollTo(0, 0);
-    }, 1500);
+      setIsSuccess(true);
+
+      // 5. Redireciona para o checkout do Mercado Pago
+      window.location.href = result.init_point;
+    } catch (error) {
+      console.error("Erro no checkout:", error);
+      alert("Erro ao conectar com o servidor de pagamento.");
+      setLoading(false);
+    }
   };
 
   if (isSuccess) {
@@ -67,11 +86,15 @@ const Checkout = () => {
         <div className="bg-green-500/10 p-6 rounded-full mb-6 text-green-500 animate-bounce">
           <CheckCircle size={80} />
         </div>
-        <h2 className="text-4xl font-bold text-white mb-4">Pedido Enviado!</h2>
+        <h2 className="text-4xl font-bold text-white mb-4">Redirecionando para pagamento...</h2>
         <p className="text-gray-400 mb-8 max-w-md text-lg">
-          Você será redirecionado para o WhatsApp para finalizar o pagamento com nosso atendente.
+          Estamos te levando para a tela segura do Mercado Pago para concluir o seu pagamento.
         </p>
-        <Button variant="primary" onClick={() => navigate('/')} className="w-full max-w-xs py-4">
+        <Button
+          variant="primary"
+          onClick={() => navigate('/')}
+          className="w-full max-w-xs py-4"
+        >
           Voltar para a Loja
         </Button>
       </div>
@@ -81,7 +104,7 @@ const Checkout = () => {
   return (
     <div className="animate-fade-in pb-20">
       <h1 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-        Finalizar no WhatsApp <ShieldCheck className="text-green-500" />
+        Finalizar Compra <ShieldCheck className="text-green-500" />
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -94,29 +117,74 @@ const Checkout = () => {
               <MapPin className="text-brand-primary" /> Endereço de Entrega
             </h2>
             
-            <form id="checkout-form" onSubmit={handleFinishOrder} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input required name="name" type="text" placeholder="Nome Completo" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none" />
-              <input required name="email" type="email" placeholder="E-mail" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none" />
-              <input required name="cep" type="text" placeholder="CEP" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none" />
-              <input required name="city" type="text" placeholder="Cidade / UF" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none" />
-              <input required name="address" type="text" placeholder="Endereço (Rua, Av)" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none" />
-              <input required name="number" type="text" placeholder="Número" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none" />
-              <input name="complement" type="text" placeholder="Complemento (Opcional)" className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none" />
+            <form
+              id="checkout-form"
+              onSubmit={handleFinishOrder}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <input
+                required
+                name="name"
+                type="text"
+                placeholder="Nome Completo"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none"
+              />
+              <input
+                required
+                name="email"
+                type="email"
+                placeholder="E-mail"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none"
+              />
+              <input
+                required
+                name="cep"
+                type="text"
+                placeholder="CEP"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none"
+              />
+              <input
+                required
+                name="city"
+                type="text"
+                placeholder="Cidade / UF"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none"
+              />
+              <input
+                required
+                name="address"
+                type="text"
+                placeholder="Endereço (Rua, Av)"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full md:col-span-2 focus:border-brand-primary outline-none"
+              />
+              <input
+                required
+                name="number"
+                type="text"
+                placeholder="Número"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none"
+              />
+              <input
+                name="complement"
+                type="text"
+                placeholder="Complemento (Opcional)"
+                className="bg-brand-dark border border-gray-700 rounded p-3 text-white w-full focus:border-brand-primary outline-none"
+              />
             </form>
           </section>
 
           <section className="bg-brand-light p-6 rounded-lg border border-brand-light/50">
-             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
               <Banknote className="text-brand-primary" /> Forma de Pagamento
             </h2>
             
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('card')}
                 className={`p-4 rounded border flex flex-col items-center gap-2 transition-all ${
-                  paymentMethod === 'card' 
-                    ? 'border-brand-primary bg-brand-primary/10 text-white shadow-[0_0_15px_rgba(102,252,241,0.1)]' 
+                  paymentMethod === 'card'
+                    ? 'border-brand-primary bg-brand-primary/10 text-white shadow-[0_0_15px_rgba(102,252,241,0.1)]'
                     : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:bg-gray-800'
                 }`}
               >
@@ -124,12 +192,12 @@ const Checkout = () => {
                 <span className="font-bold">Cartão de Crédito</span>
               </button>
 
-              <button 
+              <button
                 type="button"
                 onClick={() => setPaymentMethod('pix')}
                 className={`p-4 rounded border flex flex-col items-center gap-2 transition-all ${
-                  paymentMethod === 'pix' 
-                    ? 'border-brand-primary bg-brand-primary/10 text-white shadow-[0_0_15px_rgba(102,252,241,0.1)]' 
+                  paymentMethod === 'pix'
+                    ? 'border-brand-primary bg-brand-primary/10 text-white shadow-[0_0_15px_rgba(102,252,241,0.1)]'
                     : 'border-gray-700 text-gray-500 hover:border-gray-500 hover:bg-gray-800'
                 }`}
               >
@@ -140,7 +208,8 @@ const Checkout = () => {
             
             <div className="p-4 bg-brand-dark/50 rounded border border-gray-800 text-center animate-fade-in">
               <p className="text-gray-300">
-                Ao confirmar, você será redirecionado para o <strong>WhatsApp</strong> para enviarmos o link de pagamento ou chave PIX.
+                Ao confirmar, você será redirecionado para o{" "}
+                <strong>Mercado Pago</strong> para realizar o pagamento com segurança.
               </p>
             </div>
           </section>
@@ -153,15 +222,22 @@ const Checkout = () => {
             
             <div className="space-y-4 mb-6 max-h-60 overflow-y-auto scrollbar-hide pr-2">
               {cartItems.map(item => (
-                <div key={`${item.id}-${item.size}`} className="flex gap-3 text-sm border-b border-gray-800 pb-3 last:border-0">
-                   <div className="w-10 h-10 bg-gray-700 rounded overflow-hidden">
+                <div
+                  key={`${item.id}-${item.size}`}
+                  className="flex gap-3 text-sm border-b border-gray-800 pb-3 last:border-0"
+                >
+                  <div className="w-10 h-10 bg-gray-700 rounded overflow-hidden">
                     <img src={item.image} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-grow">
-                    <div className="text-white font-bold line-clamp-1">{item.quantity}x {item.name}</div>
+                    <div className="text-white font-bold line-clamp-1">
+                      {item.quantity}x {item.name}
+                    </div>
                     <div className="text-gray-500 text-xs">Tam: {item.size}</div>
                   </div>
-                  <div className="text-gray-300 font-mono">{formatPrice(item.price * item.quantity)}</div>
+                  <div className="text-gray-300 font-mono">
+                    {formatPrice(item.price * item.quantity)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -172,10 +248,12 @@ const Checkout = () => {
                 <span>{formatPrice(cartTotal)}</span>
               </div>
               <div className="flex justify-between text-gray-400">
-                <span className="flex items-center gap-1"><Truck size={14}/> Frete</span>
+                <span className="flex items-center gap-1">
+                  <Truck size={14} /> Frete
+                </span>
                 <span className="text-brand-primary font-bold">Grátis</span>
               </div>
-              
+
               <div className="flex justify-between text-white text-xl font-bold pt-4 border-t border-gray-800 mt-2">
                 <span>Total</span>
                 <span className="text-brand-primary">
@@ -184,19 +262,17 @@ const Checkout = () => {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               form="checkout-form"
-              variant="primary" 
+              variant="primary"
               className="w-full py-4 text-lg font-bold shadow-lg shadow-brand-primary/20 bg-green-500 hover:bg-green-600 border-green-500 text-white"
               disabled={loading}
             >
-              {loading ? 'Abrindo WhatsApp...' : 'Enviar Pedido no Zap'}
+              {loading ? 'Redirecionando...' : 'Finalizar Pagamento'}
             </Button>
-            
           </div>
         </div>
-
       </div>
     </div>
   );
