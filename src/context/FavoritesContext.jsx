@@ -1,63 +1,48 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const FavoritesContext = createContext();
 
-export const useFavorites = () => {
-  const context = useContext(FavoritesContext);
-  if (!context) {
-    throw new Error('useFavorites deve ser usado dentro de FavoritesProvider');
-  }
-  return context;
-};
-
 export const FavoritesProvider = ({ children }) => {
-  const [favorites, setFavorites] = useState([]);
-
-  // Carrega favoritos do localStorage ao iniciar
-  useEffect(() => {
-    const saved = localStorage.getItem('netfut_favorites');
-    if (saved) {
-      setFavorites(JSON.parse(saved));
+  // Inicializa o estado lendo do LocalStorage (se existir)
+  const [favorites, setFavorites] = useState(() => {
+    const savedFavorites = localStorage.getItem('@NetFut:favorites');
+    if (savedFavorites) {
+      return JSON.parse(savedFavorites);
     }
-  }, []);
+    return [];
+  });
 
-  // Salva no localStorage sempre que muda
+  // Toda vez que os favoritos mudarem, salva no LocalStorage
   useEffect(() => {
-    localStorage.setItem('netfut_favorites', JSON.stringify(favorites));
+    localStorage.setItem('@NetFut:favorites', JSON.stringify(favorites));
   }, [favorites]);
 
-  const addFavorite = (product) => {
-    const exists = favorites.some(fav => fav.id === product.id);
-    if (!exists) {
-      setFavorites(prev => [...prev, product]);
-    }
-  };
-
-  const removeFavorite = (productId) => {
-    setFavorites(prev => prev.filter(fav => fav.id !== productId));
-  };
-
+  // Função para adicionar ou remover (Toggle)
   const toggleFavorite = (product) => {
-    const exists = favorites.some(fav => fav.id === product.id);
-    if (exists) {
-      removeFavorite(product.id);
-    } else {
-      addFavorite(product);
-    }
+    setFavorites((prevFavorites) => {
+      // Verifica se o produto já está nos favoritos olhando o ID do Mongo
+      const isFavorite = prevFavorites.some(p => p._id === product._id);
+      
+      if (isFavorite) {
+        // Se já tem, remove
+        return prevFavorites.filter(p => p._id !== product._id);
+      } else {
+        // Se não tem, adiciona
+        return [...prevFavorites, product];
+      }
+    });
   };
 
-  const value = {
-    favorites,
-    favoritesCount: favorites.length,
-    addFavorite,
-    removeFavorite,
-    toggleFavorite,
-    isFavorite: (productId) => favorites.some(fav => fav.id === product.id)
+  // Função auxiliar para saber se um produto específico é favorito
+  const isFavorite = (productId) => {
+    return favorites.some(p => p._id === productId);
   };
 
   return (
-    <FavoritesContext.Provider value={value}>
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );
 };
+
+export const useFavorites = () => useContext(FavoritesContext);

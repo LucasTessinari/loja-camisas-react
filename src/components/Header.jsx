@@ -3,11 +3,13 @@ import { ShoppingCart, Menu, Search, User, Heart } from "lucide-react";
 import { Phone } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { useFavorites } from "../context/FavoritesContext"; // Import do FavoritesContext
 import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems } = useCart();
+  const { favorites } = useFavorites(); // Puxando a lista de favoritos
 
   // Coloque o número do WhatsApp da loja aqui (Código País + DDD + Número)
   const WHATSAPP_NUMBER = "5511999999999";
@@ -25,9 +27,6 @@ const Header = () => {
           <div className="flex gap-4">
             <span className="cursor-pointer hover:text-gray-300 transition-colors">
               Fale Conosco
-            </span>
-            <span className="cursor-pointer hover:text-gray-300 transition-colors">
-              Trocas e Devoluções
             </span>
           </div>
 
@@ -60,11 +59,8 @@ const Header = () => {
 
           {/* Lado Direito */}
           <div className="flex gap-4">
-            <span className="cursor-pointer hover:text-gray-300 transition-colors">
-              Acompanhe seu pedido
-            </span>
             <span className="text-yellow-400 font-bold cursor-pointer hover:opacity-80 transition-opacity">
-              Baixe o App
+              Acompanhe seu pedido
             </span>
           </div>
         </div>
@@ -110,10 +106,22 @@ const Header = () => {
                 <span>Entrar</span>
               </div>
 
-              <div className="hidden md:flex flex-col items-center text-xs gap-1 cursor-pointer hover:text-yellow-400 transition-colors">
-                <Heart size={24} />
+              {/* Botão de Favoritos no Header com Badge */}
+              <Link
+                to="/favorites"
+                className="hidden md:flex flex-col items-center text-xs gap-1 cursor-pointer hover:text-yellow-400 transition-colors relative group"
+              >
+                <Heart
+                  size={24}
+                  className="group-hover:scale-110 transition-transform"
+                />
                 <span>Favoritos</span>
-              </div>
+                {favorites.length > 0 && (
+                  <span className="absolute -top-1 right-2 bg-yellow-400 text-[#FFFFFF] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
 
               <Link
                 to="/cart"
@@ -125,7 +133,7 @@ const Header = () => {
                 />
                 <span>Carrinho</span>
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-yellow-400 text-brand-dark text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-sm">
+                  <span className="absolute -top-1 -right-2 bg-yellow-400 text-[#FFFFFF] text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
                     {totalItems}
                   </span>
                 )}
@@ -219,6 +227,16 @@ const Header = () => {
               <Phone size={16} />
               Não achou seu manto? Peça no Zap!
             </a>
+
+            {/* Menu Mobile Favoritos */}
+            <div className="flex justify-between items-center border-b border-gray-100 pb-2">
+              <span className="text-gray-800 font-bold flex items-center gap-2">
+                <Heart size={18} /> Favoritos
+              </span>
+              <span className="bg-yellow-400 text-[#FFFFFF] px-2 py-0.5 rounded-full text-xs font-bold">
+                {favorites.length}
+              </span>
+            </div>
 
             <Link
               to="/"

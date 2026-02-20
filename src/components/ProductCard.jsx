@@ -1,13 +1,19 @@
-import { ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, ChevronRight, Heart } from 'lucide-react'; // Adicionei o Heart aqui
 import { formatPrice } from '../utils/formatPrice';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useFavorites } from '../context/FavoritesContext'; // Import do FavoritesContext
 
 const ProductCard = ({ product }) => {
   const [currentImage, setCurrentImage] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  
   const { addItem } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites(); // Hooks de Favoritos
+
+  // Verifica se a camisa atual é favorita
+  const favorite = isFavorite(product._id);
 
   // Garante que images é sempre um array válido
   const images = product.images && product.images.length > 0 ? product.images : ['https://via.placeholder.com/300x400?text=Sem+Imagem'];
@@ -26,6 +32,11 @@ const ProductCard = ({ product }) => {
     e.preventDefault(); 
     // Como você já adiciona a camisa, mantemos o tamanho 'G' como default ou a lógica que você já tinha
     addItem(product, 'G', { name: '', number: '' });
+  };
+
+  const handleToggleFavorite = (e) => {
+    e.preventDefault(); // Impede de abrir a página do produto ao clicar no coração
+    toggleFavorite(product);
   };
 
   return (
@@ -53,6 +64,22 @@ const ProductCard = ({ product }) => {
           />
         ))}
 
+        {/* Botão de Favoritar (Fica no canto superior direito) */}
+        <button 
+          onClick={handleToggleFavorite}
+          className="absolute top-2 right-2 p-1.5 md:p-2 rounded-full bg-white/90 hover:bg-white shadow-sm z-20 transition-all hover:scale-110 border border-gray-100/50 group/heart"
+          aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        >
+          <Heart 
+            size={18} 
+            className={`transition-colors duration-300 ${
+              favorite 
+                ? 'fill-red-500 text-red-500' 
+                : 'text-gray-400 group-hover/heart:text-red-400'
+            }`} 
+          />
+        </button>
+
         {/* Setas de Navegação */}
         {images.length > 1 && isHovered && (
           <>
@@ -74,7 +101,7 @@ const ProductCard = ({ product }) => {
 
         {/* Tag Lançamento */}
         {product.isNew && (
-          <span className="absolute top-2 left-2 bg-yellow-400 text-brand-dark text-[10px] font-black uppercase px-2 py-1 rounded shadow-sm z-10">
+          <span className="absolute top-2 left-2 bg-yellow-400 text-[#FFFFFF] text-[10px] font-black uppercase px-2 py-1 rounded shadow-sm z-10 pointer-events-none">
             Lançamento
           </span>
         )}

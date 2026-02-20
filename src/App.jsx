@@ -8,6 +8,7 @@ import Catalog from './pages/Catalog';
 import Product from './pages/Product'; // <--- Verifique se esse import existe!
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Favorites from "./pages/Favorites";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/product/:id" element={<Product />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/favorites" element={<Favorites />} />
           </Routes>
         </main>
 

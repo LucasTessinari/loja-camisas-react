@@ -2,9 +2,9 @@ import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Link } from "react-router-dom";
-import { Shield, Zap, RefreshCw, Truck, ChevronRight } from "lucide-react";
+import { Shield, Zap, RefreshCw, Truck, ChevronRight, Heart } from "lucide-react"; // Importei o Heart aqui
 import { useCart } from "../context/CartContext";
-import { useFavorite } from "../hooks/useFavorite"; // Lembre-se de importar o hook de favoritos
+import { useFavorites } from "../context/FavoritesContext"; // Usando o Contexto de favoritos padrão
 import { useProducts } from "../hooks/useProducts";
 
 // Estilos Swiper
@@ -103,12 +103,15 @@ const LEAGUES = [
 
 // MOCK DE PRODUTOS (Para Vitrine)
 // Em breve substituiremos isso pela chamada da API do Backend
-import { products } from "../data/products"; // Importe seus produtos reais aqui
+import { products as mockProducts } from "../data/products"; // Renomeei para mockProducts para não conflitar com o do hook
 
 const Home = () => {
   const { products, loading } = useProducts();
+  const { toggleFavorite, isFavorite } = useFavorites(); // Hooks de favoritos
+  
   console.log("products from API", products);
   const showcaseProducts = products.slice(0, 10);
+  
   if (loading) return <p className="p-4">Carregando produtos...</p>;
 
   return (
@@ -175,7 +178,7 @@ const Home = () => {
 
       {/* 3. NAVEGUE POR LIGAS (Logos dos Campeonatos) */}
       <section className="container mx-auto px-4 py-10 group/section">
-        <h2 className="text-xl font-black italic uppercase mb-6 text-gray-800 flex items-center gap-2 border-l-4 border-brand-primary pl-3">
+        <h2 className="text-xl font-black italic uppercase mb-6 text-brand-primary flex items-center gap-2 border-l-4 border-brand-primary pl-3">
           Navegue por Ligas
         </h2>
 
@@ -219,7 +222,7 @@ const Home = () => {
           </h2>
           <Link
             to="/catalog"
-            className="text-sm font-bold text-blue-600 hover:underline flex items-center"
+            className="text-sm font-bold text-brand-primary hover:underline flex items-center"
           >
             Ver tudo <ChevronRight size={16} />
           </Link>
@@ -236,69 +239,95 @@ const Home = () => {
           modules={[Navigation]}
           className="pb-10 pt-2 px-2" // <-- Aumentei o pb aqui para dar respiro embaixo
         >
-          {showcaseProducts.map((prod) => (
-            <SwiperSlide key={prod._id} className="h-auto">
-              <div className="group block bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden h-full flex flex-col relative">
-                {/* IMAGEM E MINI-CARROSSEL */}
-                <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 always-show-arrows shrink-0">
-                  {prod.isNew && (
-                    <span className="absolute top-2 left-2 bg-yellow-400 text-brand-dark text-[10px] font-bold px-2 py-1 rounded uppercase z-10 shadow-sm">
-                      Lançamento
-                    </span>
-                  )}
+          {showcaseProducts.map((prod) => {
+            const favorite = isFavorite(prod._id); // Verifica se este card específico é favorito
 
-                  <Swiper
-                    modules={[Navigation]}
-                    navigation
-                    spaceBetween={0}
-                    slidesPerView={1}
-                    className="w-full h-full"
-                  >
-                    {prod.images?.map((img, idx) => (
-                      <SwiperSlide key={idx}>
-                        <Link
-                          to={`/product/${prod._id}`}
-                          className="block w-full h-full"
-                        >
-                          <img
-                            src={img}
-                            alt={`${prod.name} ${idx + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                          />
-                        </Link>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                </div>
-
-                {/* TEXTOS */}
-                <Link
-                  to={`/product/${prod._id}`}
-                  className="p-3 pb-4 flex flex-col flex-grow"
-                >
-                  {/* min-h-[2.5rem] garante 2 linhas sem cortar o texto */}
-                  <h3 className="font-bold text-gray-700 text-sm md:text-base line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-brand-primary transition-colors duration-300">
-                    {prod.name}
-                  </h3>
-
-                  <div className="flex flex-col gap-0.5 mt-auto">
-                    {prod.oldPrice && (
-                      <p className="text-xs text-gray-400 line-through">
-                        R$ {prod.oldPrice.toFixed(2).replace(".", ",")}
-                      </p>
+            return (
+              <SwiperSlide key={prod._id} className="h-auto">
+                <div className="group block bg-white rounded-md border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden h-full flex flex-col relative">
+                  
+                  {/* IMAGEM E MINI-CARROSSEL */}
+                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 always-show-arrows shrink-0">
+                    
+                    {/* Tag Lançamento */}
+                    {prod.isNew && (
+                      <span className="absolute top-2 left-2 bg-yellow-400 text-[#FFFFFF] text-[10px] font-bold px-2 py-1 rounded uppercase z-10 shadow-sm pointer-events-none">
+                        Lançamento
+                      </span>
                     )}
-                    <p className="text-lg font-black text-brand-primary">
-                      R$ {prod.price.toFixed(2).replace(".", ",")}
-                    </p>
-                    <p className="text-[10px] text-gray-500 font-medium">
-                      10x de R$ {(prod.price / 10).toFixed(2).replace(".", ",")}{" "}
-                      s/ juros
-                    </p>
+
+                    {/* Botão de Favoritar (Fica no canto superior direito) */}
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault(); // Evita que o Link envolta seja ativado
+                        toggleFavorite(prod);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 md:p-2 rounded-full bg-white/90 hover:bg-white shadow-sm z-20 transition-all hover:scale-110 border border-gray-100/50 group/heart"
+                      aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                    >
+                      <Heart 
+                        size={18} 
+                        className={`transition-colors duration-300 ${
+                          favorite 
+                            ? 'fill-red-500 text-red-500' 
+                            : 'text-gray-400 group-hover/heart:text-red-400'
+                        }`} 
+                      />
+                    </button>
+
+                    <Swiper
+                      modules={[Navigation]}
+                      navigation
+                      spaceBetween={0}
+                      slidesPerView={1}
+                      className="w-full h-full"
+                    >
+                      {prod.images?.map((img, idx) => (
+                        <SwiperSlide key={idx}>
+                          <Link
+                            to={`/product/${prod._id}`}
+                            className="block w-full h-full"
+                          >
+                            <img
+                              src={img}
+                              alt={`${prod.name} ${idx + 1}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            />
+                          </Link>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
                   </div>
-                </Link>
-              </div>
-            </SwiperSlide>
-          ))}
+
+                  {/* TEXTOS */}
+                  <Link
+                    to={`/product/${prod._id}`}
+                    className="p-3 pb-4 flex flex-col flex-grow"
+                  >
+                    {/* min-h-[2.5rem] garante 2 linhas sem cortar o texto */}
+                    <h3 className="font-bold text-gray-700 text-sm md:text-base line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-brand-primary transition-colors duration-300">
+                      {prod.name}
+                    </h3>
+
+                    <div className="flex flex-col gap-0.5 mt-auto">
+                      {prod.oldPrice && (
+                        <p className="text-xs text-gray-400 line-through">
+                          R$ {prod.oldPrice.toFixed(2).replace(".", ",")}
+                        </p>
+                      )}
+                      <p className="text-lg font-black text-brand-primary">
+                        R$ {prod.price.toFixed(2).replace(".", ",")}
+                      </p>
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        10x de R$ {(prod.price / 10).toFixed(2).replace(".", ",")}{" "}
+                        s/ juros
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              </SwiperSlide>
+            );
+          })}
         </Swiper>
       </section>
 

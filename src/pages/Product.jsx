@@ -1,21 +1,22 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom"; // Importei useNavigate
 import {
   ShoppingCart,
   ShieldCheck,
   Truck,
   RotateCcw,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
+  Heart, // Import do Heart
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useFavorites } from "../context/FavoritesContext"; // Import do Contexto de Favoritos
 import { formatPrice } from "../utils/formatPrice";
 
 const Product = () => {
   const { id } = useParams();
-  console.log("O ID DA URL É:", id);
+  const navigate = useNavigate(); // Instanciando useNavigate
   const { addItem } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites(); // Hooks de favoritos
 
   // ESTADOS DO PRODUTO (Vindos do Banco)
   const [product, setProduct] = useState(null);
@@ -139,6 +140,8 @@ const Product = () => {
       ? product.images
       : ["https://via.placeholder.com/600x800?text=Sem+Imagem"];
 
+  const isFav = isFavorite(product._id); // Variável para verificar se este produto é favorito
+
   return (
     <div className="bg-white min-h-screen pb-20 animate-fade-in">
       {/* BREADCRUMB */}
@@ -184,12 +187,23 @@ const Product = () => {
             </div>
 
             {/* Imagem Principal */}
-            <div className="flex-1 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden relative">
+            <div className="flex-1 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden relative group">
               {product.isNew && (
-                <span className="absolute top-4 left-4 bg-yellow-400 text-brand-dark text-xs font-black px-3 py-1.5 rounded uppercase shadow-sm z-10">
+                <span className="absolute top-4 left-4 bg-yellow-400 text-[#FFFFFF] text-xs font-black px-3 py-1.5 rounded uppercase shadow-sm z-10">
                   Lançamento
                 </span>
               )}
+              {/* BOTÃO DE FAVORITO EM CIMA DA IMAGEM PRINCIPAL */}
+              <button 
+                onClick={() => toggleFavorite(product)}
+                className="absolute top-4 right-4 p-3 rounded-full bg-white/90 hover:bg-white shadow-sm z-20 transition-all hover:scale-110 border border-gray-100"
+              >
+                <Heart 
+                  size={24} 
+                  className={`transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'}`} 
+                />
+              </button>
+
               <img
                 src={images[mainImage]}
                 alt={product.name}
@@ -203,9 +217,13 @@ const Product = () => {
             <p className="text-brand-primary font-bold tracking-wider uppercase text-sm mb-2">
               {product.team || product.league}
             </p>
-            <h1 className="text-2xl md:text-4xl font-black text-gray-800 leading-tight mb-4 uppercase italic">
-              {product.name}
-            </h1>
+
+            {/* Título */}
+            <div className="flex justify-between items-start gap-4 mb-4">
+              <h1 className="text-2xl md:text-4xl font-black text-gray-800 leading-tight uppercase italic">
+                {product.name}
+              </h1>
+            </div>
 
             {/* PREÇO */}
             <div className="flex items-end gap-3 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100 border-l-4 border-l-brand-primary">
@@ -250,7 +268,7 @@ const Product = () => {
                     onClick={() => setSelectedSize(size)}
                     className={`py-3 rounded font-black transition-all border-2 ${
                       selectedSize === size
-                        ? "border-brand-primary bg-brand-primary/10 text-brand-dark"
+                        ? "border-brand-primary bg-brand-primary/10 text-[#FFFFFF]"
                         : "border-gray-200 text-gray-600 hover:border-gray-300 bg-white"
                     }`}
                   >
@@ -390,7 +408,7 @@ const Product = () => {
             {/* BOTÃO COMPRAR */}
             <button
               onClick={handleAddToCart}
-              className="w-full bg-brand-primary hover:bg-yellow-500 text-brand-dark font-black text-lg uppercase tracking-wider py-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3 mb-6"
+              className="w-full bg-brand-primary hover:bg-yellow-500 text-[#FFFFFF] font-black text-lg uppercase tracking-wider py-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3 mb-6"
             >
               <ShoppingCart size={24} />
               Adicionar ao Carrinho
