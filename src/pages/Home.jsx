@@ -143,7 +143,6 @@ const Home = () => {
       </div>
 
       {/* 2. BARRA DE CONFIANÇA */}
-      {/* 2. BARRA DE CONFIANÇA (Espaçamento Organizado) */}
       <div className="bg-white border-b border-gray-200 py-6 shadow-sm relative z-10 w-full overflow-hidden">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Usando flex + justify-between no PC, e grid no Celular para ficar perfeito */}

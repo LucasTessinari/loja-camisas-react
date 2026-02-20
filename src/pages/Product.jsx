@@ -17,7 +17,9 @@ const Product = () => {
   const navigate = useNavigate(); // Instanciando useNavigate
   const { addItem } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites(); // Hooks de favoritos
-
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  
+  fetch(`${API_URL}/api/products`)
   // ESTADOS DO PRODUTO (Vindos do Banco)
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ const Product = () => {
       try {
         setLoading(true);
 
-        const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+        const res = await fetch(`${API_URL}/api/products/${id}`, {
           signal: controller.signal,
         });
 
@@ -194,13 +196,13 @@ const Product = () => {
                 </span>
               )}
               {/* BOTÃO DE FAVORITO EM CIMA DA IMAGEM PRINCIPAL */}
-              <button 
+              <button
                 onClick={() => toggleFavorite(product)}
                 className="absolute top-4 right-4 p-3 rounded-full bg-white/90 hover:bg-white shadow-sm z-20 transition-all hover:scale-110 border border-gray-100"
               >
-                <Heart 
-                  size={24} 
-                  className={`transition-colors ${isFav ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-400'}`} 
+                <Heart
+                  size={24}
+                  className={`transition-colors ${isFav ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-400"}`}
                 />
               </button>
 

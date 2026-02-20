@@ -14,6 +14,7 @@ const Header = () => {
   const { favorites } = useFavorites();
   const { user, login, logout } = useAuth(); // Puxando dados do usuário logado
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   // --- ESTADOS DA BUSCA ---
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +61,7 @@ const Header = () => {
     setShowSuggestions(true);
     if (!hasFetched) {
       try {
-        const res = await fetch("http://localhost:5000/api/products");
+        const res = await fetch(`${API_URL}/api/products`);
         const data = await res.json();
         setSearchProducts(data);
         setHasFetched(true);
