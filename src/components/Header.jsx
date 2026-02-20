@@ -6,13 +6,20 @@ import { useCart } from "../context/CartContext";
 import { useFavorites } from "../context/FavoritesContext";
 import { useAuth } from "../context/AuthContext"; // Import do Contexto de Autenticação
 import { useGoogleLogin } from "@react-oauth/google"; // Hook do Google
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // IMPORTANTE: adicionar useNavigate
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
   const { user, login, logout } = useAuth(); // Puxando dados do usuário logado
+  const navigate = useNavigate();
+
+  // --- ESTADOS DA BUSCA ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchProducts, setSearchProducts] = useState([]);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // Coloque o número do WhatsApp da loja aqui (Código País + DDD + Número)
   const WHATSAPP_NUMBER = "5511999999999";
@@ -47,8 +54,88 @@ const Header = () => {
     onError: () => console.log("Falha no Login do Google"),
   });
 
+  // --- LÓGICA DA BUSCA ---
+  // Busca a lista de produtos no backend APENAS quando o usuário clicar na barra de pesquisa
+  const handleFocusSearch = async () => {
+    setShowSuggestions(true);
+    if (!hasFetched) {
+      try {
+        const res = await fetch("http://localhost:5000/api/products");
+        const data = await res.json();
+        setSearchProducts(data);
+        setHasFetched(true);
+      } catch (error) {
+        console.error("Erro ao carregar produtos para a busca", error);
+      }
+    }
+  };
+
+  // Filtra os produtos com base no que foi digitado (Ignora Maiúsculas/Minúsculas)
+  const suggestions =
+    searchTerm.trim() === ""
+      ? []
+      : searchProducts
+          .filter((p) =>
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          )
+          .slice(0, 5); // Mostra no máximo 5 sugestões
+
+  // Quando o usuário aperta ENTER ou clica na Lupa
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() !== "") {
+      navigate(`/catalog?search=${encodeURIComponent(searchTerm)}`);
+      setSearchTerm("");
+      setShowSuggestions(false);
+      setIsMenuOpen(false);
+    }
+  };
+
+  // HTML do Dropdown de Sugestões (Para usarmos no Mobile e Desktop)
+  const renderSuggestionsDropdown = () => {
+    if (!showSuggestions || searchTerm.trim() === "") return null;
+
+    return (
+      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 z-50 overflow-hidden animate-fade-in">
+        {suggestions.length > 0 ? (
+          suggestions.map((prod) => (
+            <Link
+              key={prod._id}
+              to={`/product/${prod._id}`}
+              onMouseDown={() => {
+                // onMouseDown executa ANTES do onBlur do input
+                setSearchTerm("");
+                setShowSuggestions(false);
+                setIsMenuOpen(false);
+              }}
+              className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors"
+            >
+              <img
+                src={prod.images?.[0] || "https://via.placeholder.com/40"}
+                alt={prod.name}
+                className="w-10 h-10 object-cover rounded"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-gray-800 line-clamp-1">
+                  {prod.name}
+                </span>
+                <span className="text-xs text-brand-primary font-bold">
+                  R$ {prod.price.toFixed(2).replace(".", ",")}
+                </span>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="p-4 text-center text-sm text-gray-500 font-medium">
+            Nenhum manto encontrado com "{searchTerm}" :/
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <header className="w-full font-sans">
+    <header className="w-full font-sans sticky top-0 z-50 shadow-md">
       {/* 1. Topo Fino (Este some ao rolar) */}
       <div className="bg-brand-dark text-white text-xs py-2 hidden md:block">
         <div className="container mx-auto px-4 flex justify-between items-center">
@@ -87,15 +174,18 @@ const Header = () => {
 
           {/* Lado Direito */}
           <div className="flex gap-4">
-            <span className="text-yellow-400 font-bold cursor-pointer hover:opacity-80 transition-opacity">
+            <Link
+              to="/tracking"
+              className="text-yellow-400 font-bold hover:opacity-80 transition-opacity"
+            >
               Acompanhe seu pedido
-            </span>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* 2. Barra Principal + Menu (Este GRUPO fica fixo) */}
-      <div className="sticky top-0 z-50 w-full">
+      <div className="w-full">
         {/* Barra Azul */}
         <div className="bg-brand-primary py-4 shadow-md relative z-20">
           <div className="container mx-auto px-4 flex items-center justify-between gap-4">
@@ -117,14 +207,25 @@ const Header = () => {
 
             {/* Busca (Estilo Barra Grande) */}
             <div className="hidden md:flex flex-grow max-w-2xl relative mx-8">
-              <input
-                type="text"
-                placeholder="O que você está procurando?"
-                className="w-full py-3 px-4 rounded-full text-sm text-gray-700 focus:outline-none shadow-inner border border-transparent focus:border-yellow-400"
-              />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-primary hover:bg-brand-primary hover:text-white rounded-full p-2 transition-colors">
-                <Search size={20} />
-              </button>
+              <form onSubmit={handleSearchSubmit} className="w-full relative">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onFocus={handleFocusSearch}
+                  onBlur={() => setShowSuggestions(false)}
+                  placeholder="O que você está procurando?"
+                  className="w-full py-3 px-4 rounded-full text-sm text-gray-700 focus:outline-none shadow-inner border border-transparent focus:border-yellow-400"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-primary hover:bg-brand-primary hover:text-white rounded-full p-2 transition-colors"
+                >
+                  <Search size={20} />
+                </button>
+                {/* Renderiza o Dropdown */}
+                {renderSuggestionsDropdown()}
+              </form>
             </div>
 
             {/* Ícones da Direita */}
@@ -214,17 +315,26 @@ const Header = () => {
           </div>
 
           {/* Busca Mobile (Aparece embaixo no celular) */}
-          <div className="md:hidden px-4 mt-3">
-            <div className="relative">
+          <div className="md:hidden px-4 mt-3 pb-2">
+            <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={handleFocusSearch}
+                onBlur={() => setShowSuggestions(false)}
                 placeholder="Buscar produtos..."
                 className="w-full py-2 px-4 rounded text-sm outline-none"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <button
+                type="submit"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+              >
                 <Search size={18} />
               </button>
-            </div>
+              {/* Renderiza o Dropdown no Mobile */}
+              {renderSuggestionsDropdown()}
+            </form>
           </div>
         </div>
 
@@ -305,11 +415,17 @@ const Header = () => {
               {user ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={user.picture}
-                      alt="Avatar"
-                      className="w-10 h-10 rounded-full"
-                    />
+                    {user.picture ? (
+                      <img
+                        src={user.picture}
+                        alt="Avatar"
+                        className="w-10 h-10 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-brand-primary text-brand-dark flex items-center justify-center font-bold text-lg">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <span className="text-gray-800 font-bold">
                       Olá, {user.name.split(" ")[0]}
                     </span>

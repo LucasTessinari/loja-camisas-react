@@ -49,7 +49,7 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Coluna 2: Loja */}
+          {/* Coluna 2: Loja (Navegue) - LINKS ATUALIZADOS */}
           <div>
             <h4 className="text-white font-bold text-lg mb-4 border-b border-brand-primary/30 pb-2 inline-block">
               Navegue
@@ -57,18 +57,10 @@ const Footer = () => {
             <ul className="space-y-2 text-sm text-gray-400">
               <li>
                 <Link
-                  to="/catalog"
-                  className="hover:text-brand-secondary transition-colors"
-                >
-                  Retrô
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/catalog?category=Todos"
                   className="hover:text-brand-secondary transition-colors"
                 >
-                  Ofertas
+                  Todas as Categorias
                 </Link>
               </li>
               <li>
@@ -84,25 +76,58 @@ const Footer = () => {
                   to="/catalog?category=Europeus"
                   className="hover:text-brand-secondary transition-colors"
                 >
-                  Internacional
+                  Europeus
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalog?category=Seleções"
+                  className="hover:text-brand-secondary transition-colors"
+                >
+                  Seleções
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalog?category=Retrô"
+                  className="hover:text-brand-secondary transition-colors"
+                >
+                  Retrô
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/catalog?category=Lançamento"
+                  className="hover:text-brand-secondary transition-colors"
+                >
+                  Lançamento
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Coluna 3: Atendimento */}
+          {/* Coluna 3: Atendimento - LINK DE RASTREIO ADICIONADO */}
           <div>
             <h4 className="text-white font-bold text-lg mb-4 border-b border-brand-primary/30 pb-2 inline-block">
               Atendimento
             </h4>
             <ul className="space-y-3 text-sm text-gray-400">
+              {/* Novo Link de Rastreio */}
+              <li>
+                <Link 
+                  to="/tracking" 
+                  className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer font-bold text-brand-secondary"
+                >
+                  Acompanhe seu Pedido
+                </Link>
+              </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
                 <Phone size={16} className="text-brand-secondary" /> (11)
                 3028-5355
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
                 <Mail size={16} className="text-brand-secondary" />{" "}
-                sac@netfut.com
+                <a href="mailto:sac@netfut.com" className="hover:underline">sac@netfut.com</a>
               </li>
               <li className="flex items-center gap-2 hover:text-white transition-colors cursor-pointer">
                 <MapPin size={16} className="text-brand-secondary" /> São Paulo,

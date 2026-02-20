@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Filter } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import NotFoundBanner from "../components/NotFoundBanner";
 
 // IMPORTA O HOOK DO BANCO
 import { useProducts } from '../hooks/useProducts'; 
@@ -143,6 +144,8 @@ const Catalog = () => {
           </button>
         </div>
       )}
+      
+      <NotFoundBanner />
     </div>
   );
 };

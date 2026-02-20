@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop"; // <-- IMPORTA AQUI
+import CookieConsent from "./components/CookieConsent";
 
 // Importando os provedores de Autenticação
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -13,15 +15,18 @@ import Product from "./pages/Product";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Favorites from "./pages/Favorites";
+import Tracking from "./pages/Tracking";
 
 function App() {
-  // ID Google Cloud Console
   const GOOGLE_CLIENT_ID = "596970924830-c3juf8d889okplkes2ovvfei1ki4mhvl.apps.googleusercontent.com";
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <BrowserRouter>
+          {/* COMPONENTE INVISÍVEL QUE ROLA PRO TOPO SEMPRE QUE MUDAR DE ROTA */}
+          <ScrollToTop />
+          
           <div className="flex flex-col min-h-screen bg-brand-light font-sans text-brand-text">
             <Header />
 
@@ -32,6 +37,7 @@ function App() {
                 <Route path="/product/:id" element={<Product />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/favorites" element={<Favorites />} />
+                <Route path="/tracking" element={<Tracking />} />
 
                 <Route path="/checkout" element={<Checkout />} />
                 <Route
@@ -48,9 +54,13 @@ function App() {
                 />
               </Routes>
             </main>
-
+            
             <Footer />
+            
+            {/* NOSSO BANNER DE COOKIES */}
+            <CookieConsent />
           </div>
+
         </BrowserRouter>
       </AuthProvider>
     </GoogleOAuthProvider>
