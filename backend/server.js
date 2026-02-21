@@ -6,17 +6,25 @@ const cors = require('cors');
 const mpRouter = require('./mercadopago');
 
 const app = express();
+
+// Permite que qualquer frontend (Vercel ou Localhost) acesse a API
 app.use(cors());
 app.use(express.json());
 
-// rota de pagamentos Mercado Pago
+// Rota de pagamentos Mercado Pago
 app.use("/api/payments", mpRouter);
 
-// 1. Conexão Mongo
+// 1. Conexão Mongo (Usa a URL do Render em produção, ou o localhost no seu PC)
+const DB_URL = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/loja-camisas';
+
+console.log('Tentando conectar no banco de dados...');
+
 mongoose
-  .connect('mongodb://127.0.0.1:27017/loja-camisas')
-  .then(() => console.log('MongoDB conectado'))
-  .catch(err => console.error(err));
+  .connect(DB_URL)
+  .then(() => console.log('✅ MongoDB conectado com sucesso!'))
+  .catch(err => {
+    console.error('❌ Erro fatal ao conectar no MongoDB:', err);
+  });
 
 // 2. Schema igual ao que você usou no Compass
 const productSchema = new mongoose.Schema({
@@ -40,10 +48,12 @@ app.get('/api/products', async (req, res) => {
     const products = await Product.find().sort({ sku: 1 }); // em ordem do sku
     res.json(products);
   } catch (err) {
+    console.error("Erro ao buscar a lista de produtos:", err);
     res.status(500).json({ error: 'Erro ao buscar produtos' });
   }
 });
 
+// Rota para buscar UM produto específico pelo ID
 app.get('/api/products/:id', async (req, res) => {
   console.log("👉 ALGUÉM BATEU NA ROTA DE BUSCAR UM PRODUTO");
   console.log("🆔 ID RECEBIDO:", req.params.id);
@@ -69,6 +79,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// 4. Sobe servidor
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+// 4. Sobe servidor (Render define a porta automaticamente pelo process.env.PORT)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
