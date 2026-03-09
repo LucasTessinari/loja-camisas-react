@@ -11,7 +11,7 @@
 **E-commerce full stack de camisas e camisetas desenvolvido do zero,
 com arquitetura profissional separada em Frontend, API REST e Banco de Dados em Nuvem.**
 
-[🌐 Ver online](https://[URL-DO-SITE]) • [💼 LinkedIn](https://linkedin.com/in/lucastessinari) • [📧 Contato](mailto:tessinarilucas@gmail.com)
+[🌐 Ver online](https://netfut.produtohub.com.br) • [💼 LinkedIn](https://linkedin.com/in/lucastessinari) • [📧 Contato](mailto:tessinarilucas@gmail.com)
 
 </div>
 
