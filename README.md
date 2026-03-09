@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛍️ [NOME DA LOJA]
+# 🛍️ NETFUT
 
 [![Deploy](https://img.shields.io/badge/deploy-vercel-black?style=for-the-badge&logo=vercel)](https://[URL-DO-SITE])
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org)
@@ -59,88 +59,57 @@ com arquitetura profissional separada em Frontend, API REST e Banco de Dados em 
 
 ## 🏗️ Arquitetura
 
-O projeto segue uma arquitetura **desacoplada (Decoupled)**, com Frontend e Backend totalmente independentes e se comunicando via API REST:
+O projeto segue uma arquitetura **desacoplada (Decoupled)**, com Frontend e Backend totalmente independentes comunicando-se via API REST:
 
-┌─────────────────────┐ HTTPS / REST API ┌──────────────────────┐
-│ FRONTEND (React) │ ─────────────────────────────▶ │ BACKEND (Node.js) │
-│ Vercel │ ◀───────────────────────────── │ Render │
-└─────────────────────┘ JSON └──────────┬───────────┘
-│ Mongoose ODM
-┌──────────▼───────────┐
-│ MongoDB Atlas │
-│ (Banco em Nuvem) │
-└──────────────────────┘
+```
++------------------------+                  +------------------------+
+|  FRONTEND (React)      | --- REST API --> |  BACKEND (Node.js)     |
+|  Vercel                | <--    JSON  --- |  Render                |
++------------------------+                  +------------+-----------+
+                                                         |
+                                                   Mongoose ODM
+                                                         |
+                                            +------------v-----------+
+                                            |  MongoDB Atlas         |
+                                            |  (Banco em Nuvem)      |
+                                            +------------------------+
+```
 
-text
 
 ### Estrutura de Pastas
 
+```
 📦 frontend/
-├── src/
-│ ├── components/
-│ │ ├── Header.jsx # Navegação e carrinho
-│ │ ├── ProductCard.jsx # Card reutilizável de produto
-│ │ ├── CartDrawer.jsx # Gaveta lateral do carrinho
-│ │ └── Footer.jsx # Rodapé
-│ ├── pages/
-│ │ ├── Home.jsx # Página principal com banner e destaques
-│ │ ├── Catalog.jsx # Catálogo completo com filtros
-│ │ ├── ProductDetail.jsx # Detalhe do produto
-│ │ └── Checkout.jsx # Finalização da compra
-│ ├── context/
-│ │ └── CartContext.jsx # Estado global do carrinho (Context API)
-│ ├── services/
-│ │ └── api.js # Instância centralizada do Axios
-│ ├── App.jsx # Roteamento principal
-│ └── main.jsx # Entry point
+└── src/
+    ├── components/
+    │   ├── Header.jsx           # Navegação e carrinho
+    │   ├── ProductCard.jsx      # Card reutilizável de produto
+    │   ├── CartDrawer.jsx       # Gaveta lateral do carrinho
+    │   └── Footer.jsx           # Rodapé
+    ├── pages/
+    │   ├── Home.jsx             # Página principal com banner e destaques
+    │   ├── Catalog.jsx          # Catálogo completo com filtros
+    │   ├── ProductDetail.jsx    # Detalhe do produto
+    │   └── Checkout.jsx         # Finalização da compra
+    ├── context/
+    │   └── CartContext.jsx      # Estado global do carrinho (Context API)
+    ├── services/
+    │   └── api.js               # Instância centralizada do Axios
+    ├── App.jsx                  # Roteamento principal
+    └── main.jsx                 # Entry point
 
 📦 backend/
 ├── models/
-│ └── Product.js # Schema do produto no MongoDB
+│   └── Product.js               # Schema do produto no MongoDB
 ├── routes/
-│ ├── products.js # Rotas GET /api/products
-│ └── payment.js # Rotas POST /api/payment
+│   ├── products.js              # Rotas GET /api/products
+│   └── payment.js               # Rotas POST /api/payment
 ├── controllers/
-│ ├── productController.js # Lógica dos produtos
-│ └── paymentController.js # Lógica do Mercado Pago
-└── server.js # Entry point da API
+│   ├── productController.js     # Lógica dos produtos
+│   └── paymentController.js     # Lógica do Mercado Pago
+└── server.js                    # Entry point da API
+```
 
-text
-
----
-
-## 🚀 Como Rodar Localmente
-
-**Pré-requisitos:** Node.js 18+, Git e uma conta no MongoDB Atlas.
-
-### 1. Clone o repositório
-```bash
-git clone https://github.com/LucasTessinari/[NOME-DO-REPO].git
-cd [NOME-DO-REPO]
-2. Configure e rode o Backend
-bash
-cd backend
-npm install
-Crie um arquivo .env dentro da pasta backend/:
-
-text
-MONGO_URI=sua_connection_string_do_mongodb_atlas
-MERCADO_PAGO_TOKEN=seu_access_token_do_mercado_pago
-PORT=5000
-bash
-npm run dev
-# API rodando em http://localhost:5000
-3. Configure e rode o Frontend
-bash
-cd ../frontend
-npm install
-Crie um arquivo .env dentro da pasta frontend/:
-
-text
-VITE_API_URL=http://localhost:5000
-bash
-npm run dev
-# Loja rodando em http://localhost:5173
 📐 Decisões Técnicas
 Por que Frontend e Backend separados?
 Essa arquitetura permite escalar cada parte de forma independente. Se o volume de requisições na API crescer, posso aumentar apenas o servidor Node.js sem precisar redeploiar o frontend.
